@@ -44,13 +44,14 @@ contract AccessControl {
     }
 
     bool public initialized = false; // Whether the contract has been initialized
-    address owner; // The admin that created the contract
+    address public owner; // The admin that created the contract
     address[] public admins; // The admins that can propose policy changes
     address user; // The user that signed this contract
-    Policy[] public policies; // The active policies for the current user
-    Proposal[] public proposals; // The policies proposed by the user
+    mapping(uint => Policy) public policies; // The active policies for the current user
+    mapping(uint => Proposal) public proposals; // The policies proposed by the user
     uint public policiesCount; // Used to generate incremental policy IDs
     uint public proposalsCount; // Used to generate incremental proposal IDs
+    uint public adminsCount; // The number of admins (used for enumeration)
 
     constructor (address signer) {
         // Set the creator as owner and admin
@@ -254,7 +255,67 @@ contract AccessControl {
     ===========================
     */
 
-    // Getters of public fields are accessible by everyone
+    // Get parameter values of proposals
+    function getProposalBoolValue (uint proposalId, string memory name) public view
+        returns (bool value) {
+        Proposal storage proposal = proposals[proposalId];
+        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+            if (compareStrings(proposal.boolParams[i].name, name)) {
+                value = proposal.boolParams[i].value;
+            }
+        }
+    }
+
+    function getProposalIntValue (uint proposalId, string memory name) public view
+        returns (int value) {
+        Proposal storage proposal = proposals[proposalId];
+        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+            if (compareStrings(proposal.boolParams[i].name, name)) {
+                value = proposal.intParams[i].value;
+            }
+        }
+    }
+
+    function getProposalStringValue (uint proposalId, string memory name) public view
+        returns (string memory value) {
+        Proposal storage proposal = proposals[proposalId];
+        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+            if (compareStrings(proposal.boolParams[i].name, name)) {
+                value = proposal.stringParams[i].value;
+            }
+        }
+    }
+
+    // Get parameter values of policies
+    function getPolicyBoolValue (uint policyId, string memory name) public view
+        returns (bool value) {
+        Policy storage policy = policies[policyId];
+        for (uint256 i = 0; i < policy.boolParams.length; i++) {
+            if (compareStrings(policy.boolParams[i].name, name)) {
+                value = policy.boolParams[i].value;
+            }
+        }
+    }
+
+    function getPolicyIntValue (uint policyId, string memory name) public view
+        returns (int value) {
+        Policy storage policy = policies[policyId];
+        for (uint256 i = 0; i < policy.boolParams.length; i++) {
+            if (compareStrings(policy.boolParams[i].name, name)) {
+                value = policy.intParams[i].value;
+            }
+        }
+    }
+
+    function getPolicyStringValue (uint policyId, string memory name) public view
+        returns (string memory value) {
+        Policy storage policy = policies[policyId];
+        for (uint256 i = 0; i < policy.boolParams.length; i++) {
+            if (compareStrings(policy.boolParams[i].name, name)) {
+                value = policy.stringParams[i].value;
+            }
+        }
+    }
 
     /*
     =================
@@ -263,6 +324,10 @@ contract AccessControl {
     */
 
     // Nothing to see here
+    function compareStrings (string memory a, string memory b) internal pure
+        returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
 
     /*
     ======
