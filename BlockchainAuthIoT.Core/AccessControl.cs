@@ -1,6 +1,7 @@
 ﻿using BlockchainAuthIoT.Core.Exceptions;
 using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.Core.Utils;
+using Nethereum.ABI;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
@@ -97,6 +98,7 @@ namespace BlockchainAuthIoT.Core
             return admins.ToArray();
         }
 
+        #region Admins and Contract Management
         /// <summary>
         /// Adds the given <paramref name="adminAddress"/> to the admins (only an admin can perform this).
         /// </summary>
@@ -142,15 +144,151 @@ namespace BlockchainAuthIoT.Core
                 throw new ContractException(transactionReceipt.Logs);
             }
         }
+        #endregion
+
+        #region OCPs (On-Chain Policies) Management
+        /// <summary>
+        /// Gets the list of all on-chain policies.
+        /// </summary>
+        public async Task<OCP[]> GetOCPs()
+        {
+            var countFunction = contract.GetFunction("ocpsCount");
+            var ocpsCount = await countFunction.CallAsync<uint>();
+
+            var function = contract.GetFunction("ocps");
+
+            var ocps = new List<OCP>();
+            for (int i = 0; i < ocpsCount; i++)
+            {
+                var ocp = await function.CallDeserializingToObjectAsync<OCP>(i);
+                ocps.Add(ocp);
+            }
+
+            return ocps.ToArray();
+        }
 
         /// <summary>
-        /// Creates a policy to access a specific <paramref name="resource"/> with a given <paramref name="expiration"/>.
+        /// Creates an on-chain policy to access a specific <paramref name="resource"/> with a given <paramref name="expiration"/>.
         /// </summary>
-        public async Task<Policy> CreatePolicy(string from, string resource, DateTime startTime, DateTime expiration)
+        public async Task<OCP> CreateOCP(string from, string resource, DateTime startTime, DateTime expiration)
         {
-            var createFunction = contract.GetFunction("createPolicy");
+            var createFunction = contract.GetFunction("createOCP");
             var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
                 resource, startTime.ToUnixTime(), expiration.ToUnixTime());
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+
+            // This is the ID of the next ocp so we need to subtract 1
+            var ocpsCount = await contract.GetFunction("ocpsCount").CallAsync<uint>();
+            var ocpId = ocpsCount - 1;
+
+            var getFunction = contract.GetFunction("ocps");
+            var ocp = await getFunction.CallDeserializingToObjectAsync<OCP>(ocpId);
+            ocp.Id = ocpId;
+
+            return ocp;
+        }
+
+        /// <summary>
+        /// Sets a boolean parameter for the given on-chain policy.
+        /// </summary>
+        public async Task SetOCPBoolParam(string from, OCP ocp, string name, bool value)
+        {
+            var setFunction = contract.GetFunction("setOCPBoolParam");
+            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                ocp.Id, name, value);
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+        }
+
+        /// <summary>
+        /// Sets an integer parameter for the given on-chain policy.
+        /// </summary>
+        public async Task SetOCPIntParam(string from, OCP ocp, string name, int value)
+        {
+            var setFunction = contract.GetFunction("setOCPIntParam");
+            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                ocp.Id, name, value);
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+        }
+
+        /// <summary>
+        /// Sets a string parameter for the given on-chain policy.
+        /// </summary>
+        public async Task SetOCPStringParam(string from, OCP ocp, string name, string value)
+        {
+            var setFunction = contract.GetFunction("setOCPStringParam");
+            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                ocp.Id, name, value);
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+        }
+
+        /// <summary>
+        /// Gets the value of a boolean parameter for the given <paramref name="ocp"/>.
+        /// </summary>
+        public Task<bool> GetOCPBoolParam(OCP ocp, string name)
+            => contract.GetFunction("getOCPBoolParam").CallAsync<bool>(ocp.Id, name);
+
+        /// <summary>
+        /// Gets the value of an integer parameter for the given <paramref name="ocp"/>.
+        /// </summary>
+        public Task<int> GetOCPIntParam(OCP ocp, string name)
+            => contract.GetFunction("getOCPIntParam").CallAsync<int>(ocp.Id, name);
+
+        /// <summary>
+        /// Gets the value of a string parameter for the given <paramref name="ocp"/>.
+        /// </summary>
+        public Task<string> GetOCPStringParam(OCP ocp, string name)
+            => contract.GetFunction("getOCPStringParam").CallAsync<string>(ocp.Id, name);
+        #endregion
+
+        #region Policies Management
+        /// <summary>
+        /// Gets the list of all policies.
+        /// </summary>
+        public async Task<Policy[]> GetPolicies()
+        {
+            var countFunction = contract.GetFunction("policiesCount");
+            var policiesCount = await countFunction.CallAsync<uint>();
+
+            var function = contract.GetFunction("policies");
+
+            var policies = new List<Policy>();
+            for (int i = 0; i < policiesCount; i++)
+            {
+                var policy = await function.CallDeserializingToObjectAsync<Policy>(i);
+                policies.Add(policy);
+            }
+
+            return policies.ToArray();
+        }
+
+        /// <summary>
+        /// Creates a new policy given a <paramref name="hashCode"/> for validation and an
+        /// <paramref name="externalResource"/> where the body of the policy can be found.
+        /// </summary>
+        public async Task<Policy> CreatePolicy(string from, byte[] hashCode, string externalResource)
+        {
+            if (hashCode.Length != 32)
+                throw new ArgumentException("Must be 32 bytes long", nameof(hashCode));
+
+            var createFunction = contract.GetFunction("createPolicy");
+            var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                hashCode, externalResource);
 
             if (!transactionReceipt.Succeeded())
             {
@@ -167,59 +305,69 @@ namespace BlockchainAuthIoT.Core
 
             return policy;
         }
+        #endregion
+
+        #region Proposal Management
+        /// <summary>
+        /// Gets the list of all proposals.
+        /// </summary>
+        public async Task<Proposal[]> GetProposals()
+        {
+            var countFunction = contract.GetFunction("proposalsCount");
+            var proposalsCount = await countFunction.CallAsync<uint>();
+
+            var function = contract.GetFunction("proposals");
+
+            var proposals = new List<Proposal>();
+            for (int i = 0; i < proposalsCount; i++)
+            {
+                var proposal = await function.CallDeserializingToObjectAsync<Proposal>(i);
+                proposals.Add(proposal);
+            }
+
+            return proposals.ToArray();
+        }
 
         /// <summary>
-        /// Sets a boolean parameter for the given policy.
+        /// Creates a new proposal given a <paramref name="hashCode"/> for validation and an
+        /// <paramref name="externalResource"/> where the body of the proposal can be found.
         /// </summary>
-        public async Task SetPolicyBoolParam(string from, Policy policy, string name, bool value)
+        public async Task<Proposal> CreateProposal(string from, byte[] hashCode, string externalResource)
         {
-            var setFunction = contract.GetFunction("setPolicyBoolParam");
-            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                policy.Id, name, value);
+            var createFunction = contract.GetFunction("createProposal");
+            var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                hashCode, externalResource);
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+
+            // This is the ID of the next policy so we need to subtract 1
+            var proposalsCount = await contract.GetFunction("proposalsCount").CallAsync<uint>();
+            var proposalId = proposalsCount - 1;
+
+            var getFunction = contract.GetFunction("proposals");
+            var proposal = await getFunction.CallDeserializingToObjectAsync<Proposal>(proposalId);
+            proposal.Id = proposalId;
+
+            return proposal;
+        }
+
+        /// <summary>
+        /// Approves a given proposal and turns it into a policy.
+        /// </summary>
+        public async Task ApproveProposal(string from, Proposal proposal)
+        {
+            var approveFunction = contract.GetFunction("approveProposal");
+            var transactionReceipt = await approveFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+                proposal.Id);
 
             if (!transactionReceipt.Succeeded())
             {
                 throw new ContractException(transactionReceipt.Logs);
             }
         }
-
-        /// <summary>
-        /// Sets an integer parameter for the given policy.
-        /// </summary>
-        public async Task SetPolicyIntParam(string from, Policy policy, string name, int value)
-        {
-            var setFunction = contract.GetFunction("setPolicyIntParam");
-            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                policy.Id, name, value);
-
-            if (!transactionReceipt.Succeeded())
-            {
-                throw new ContractException(transactionReceipt.Logs);
-            }
-        }
-
-        /// <summary>
-        /// Sets a string parameter for the given policy.
-        /// </summary>
-        public async Task SetPolicyStringParam(string from, Policy policy, string name, string value)
-        {
-            var setFunction = contract.GetFunction("setPolicyStringParam");
-            var transactionReceipt = await setFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                policy.Id, name, value);
-
-            if (!transactionReceipt.Succeeded())
-            {
-                throw new ContractException(transactionReceipt.Logs);
-            }
-        }
-
-        public Task<bool> GetPolicyBoolParam(Policy policy, string name)
-            => contract.GetFunction("getPolicyBoolParam").CallAsync<bool>(policy.Id, name);
-
-        public Task<int> GetPolicyIntParam(Policy policy, string name)
-            => contract.GetFunction("getPolicyIntParam").CallAsync<int>(policy.Id, name);
-
-        public Task<string> GetPolicyStringParam(Policy policy, string name)
-            => contract.GetFunction("getPolicyStringParam").CallAsync<string>(policy.Id, name);
+        #endregion
     }
 }

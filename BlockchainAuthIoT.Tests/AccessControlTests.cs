@@ -4,6 +4,7 @@ using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.Core.Utils;
 using Nethereum.Web3;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -123,93 +124,237 @@ namespace BlockchainAuthIoT.Tests
         }
         #endregion
 
-        #region Policy Management
+        #region OCP Management
         [Fact]
-        public async Task CreatePolicy_FromAdmin_Ok()
+        public async Task CreateOCP_FromAdmin_Ok()
         {
             var resource = "test";
             var startTime = DateTime.UtcNow.TrimMilliseconds();
             var expiration = startTime.AddDays(7);
 
             var ac = await DeployContract();
-            var policy = await ac.CreatePolicy(owner, resource, startTime, expiration);
+            var ocp = await ac.CreateOCP(owner, resource, startTime, expiration);
 
-            Assert.Equal(resource, policy.Resource);
-            Assert.Equal(expiration, policy.Expiration);
-            Assert.Equal(startTime, policy.StartTime);
+            Assert.Equal(resource, ocp.Resource);
+            Assert.Equal(expiration, ocp.Expiration);
+            Assert.Equal(startTime, ocp.StartTime);
+        }
+
+        [Fact]
+        public async Task CreateOCP_FromAdminAfterInitialization_Throws()
+        {
+            var resource = "test";
+            var startTime = DateTime.UtcNow.TrimMilliseconds();
+            var expiration = startTime.AddDays(7);
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner);
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.CreateOCP(owner, resource, startTime, expiration));
+        }
+
+        [Fact]
+        public async Task CreateOCP_FromSigner_Throws()
+        {
+            var resource = "test";
+            var startTime = DateTime.UtcNow.TrimMilliseconds();
+            var expiration = startTime.AddDays(7);
+
+            var ac = await DeployContract();
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.CreateOCP(signer, resource, startTime, expiration));
+        }
+
+        [Fact]
+        public async Task SetOCPBoolParam_SetAndGet_SameValue()
+        {
+            var value = true;
+            var name = "myBool";
+            var ac = await DeployContract();
+            var ocp = await CreateDummyOCP(ac, owner);
+
+            await ac.SetOCPBoolParam(owner, ocp, name, value);
+            Assert.Equal(value, await ac.GetOCPBoolParam(ocp, name));
+        }
+
+        [Fact]
+        public async Task SetOCPIntParam_SetAndGet_SameValue()
+        {
+            int value = 42;
+            var name = "myInt";
+            var ac = await DeployContract();
+            var ocp = await CreateDummyOCP(ac, owner);
+
+            await ac.SetOCPIntParam(owner, ocp, name, value);
+            Assert.Equal(value, await ac.GetOCPIntParam(ocp, name));
+        }
+
+        [Fact]
+        public async Task SetOCPStringParam_SetAndGet_SameValue()
+        {
+            string value = "dev";
+            var name = "myString";
+            var ac = await DeployContract();
+            var ocp = await CreateDummyOCP(ac, owner);
+
+            await ac.SetOCPStringParam(owner, ocp, name, value);
+            Assert.Equal(value, await ac.GetOCPStringParam(ocp, name));
+        }
+
+        [Fact]
+        public async Task SetOCPBoolParam_FromSigner_Throws()
+        {
+            bool value = true;
+            var name = "myBool";
+            var ac = await DeployContract();
+            var ocp = await CreateDummyOCP(ac, owner);
+
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.SetOCPBoolParam(signer, ocp, name, value));
+        }
+        #endregion
+
+        #region Policy Management
+        [Fact]
+        public async Task CreatePolicy_FromAdmin_Ok()
+        {
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            var policy = await ac.CreatePolicy(owner, hashCode, externalResource);
+
+            Assert.True(hashCode.SequenceEqual(policy.HashCode));
+            Assert.Equal(externalResource, policy.ExternalResource);
+        }
+
+        [Fact]
+        public async Task CreatePolicy_FromAdminAfterInitialization_Throws()
+        {
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner);
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.CreatePolicy(owner, hashCode, externalResource));
         }
 
         [Fact]
         public async Task CreatePolicy_FromSigner_Throws()
         {
-            var resource = "test";
-            var startTime = DateTime.UtcNow.TrimMilliseconds();
-            var expiration = startTime.AddDays(7);
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
 
             var ac = await DeployContract();
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreatePolicy(signer, resource, startTime, expiration));
+                async () => await ac.CreatePolicy(signer, hashCode, externalResource));
+        }
+        #endregion
+
+        #region Proposal Management
+        [Fact]
+        public async Task CreateProposal_FromSigner_Ok()
+        {
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner);
+            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
+
+            Assert.False(proposal.Approved);
+            Assert.True(hashCode.SequenceEqual(proposal.HashCode));
+            Assert.Equal(externalResource, proposal.ExternalResource);
         }
 
         [Fact]
-        public async Task SetPolicyBoolParam_SetAndGet_SameValue()
+        public async Task CreateProposal_FromSignerBeforeInitialization_Throws()
         {
-            var value = true;
-            var name = "myBool";
-            var ac = await DeployContract();
-            var policy = await CreateDummyPolicy(ac, owner);
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
 
-            await ac.SetPolicyBoolParam(owner, policy, name, value);
-            Assert.Equal(value, await ac.GetPolicyBoolParam(policy, name));
+            var ac = await DeployContract();
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.CreateProposal(signer, hashCode, externalResource));
         }
 
         [Fact]
-        public async Task SetPolicyIntParam_SetAndGet_SameValue()
+        public async Task CreateProposal_FromAdmin_Throws()
         {
-            int value = 42;
-            var name = "myInt";
-            var ac = await DeployContract();
-            var policy = await CreateDummyPolicy(ac, owner);
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
 
-            await ac.SetPolicyIntParam(owner, policy, name, value);
-            Assert.Equal(value, await ac.GetPolicyIntParam(policy, name));
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner);
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.CreateProposal(owner, hashCode, externalResource));
         }
 
         [Fact]
-        public async Task SetPolicyStringParam_SetAndGet_SameValue()
+        public async Task ApproveProposal_FromAdmin_Ok()
         {
-            string value = "dev";
-            var name = "myString";
-            var ac = await DeployContract();
-            var policy = await CreateDummyPolicy(ac, owner);
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
 
-            await ac.SetPolicyStringParam(owner, policy, name, value);
-            Assert.Equal(value, await ac.GetPolicyStringParam(policy, name));
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner);
+            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
+
+            await ac.ApproveProposal(owner, proposal);
+            var proposals = await ac.GetProposals();
+            var approvedProposal = proposals.Last();
+
+            Assert.True(approvedProposal.Approved);
+
+            var policies = await ac.GetPolicies();
+            var newPolicy = policies.Last();
+
+            Assert.True(hashCode.SequenceEqual(newPolicy.HashCode));
+            Assert.Equal(externalResource, newPolicy.ExternalResource);
         }
 
         [Fact]
-        public async Task SetPolicyBoolParam_FromSigner_Throws()
+        public async Task ApproveProposal_FromSigner_Throws()
         {
-            bool value = true;
-            var name = "myBool";
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
             var ac = await DeployContract();
-            var policy = await CreateDummyPolicy(ac, owner);
+            await ac.InitializeContract(owner);
+            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
 
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.SetPolicyBoolParam(signer, policy, name, value));
+                async () => await ac.ApproveProposal(signer, proposal));
         }
         #endregion
 
         private Task<AccessControl> DeployContract()
             => AccessControl.Deploy(web3Fixture.Web3, owner, signer);
 
-        private static async Task<Policy> CreateDummyPolicy(AccessControl ac, string from)
+        private static Task<OCP> CreateDummyOCP(AccessControl ac, string from)
         {
             var resource = "test";
             var startTime = DateTime.UtcNow.TrimMilliseconds();
             var expiration = startTime.AddDays(7);
 
-            return await ac.CreatePolicy(from, resource, startTime, expiration);
+            return ac.CreateOCP(from, resource, startTime, expiration);
         }
     }
 }

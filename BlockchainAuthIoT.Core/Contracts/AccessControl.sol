@@ -212,13 +212,13 @@ contract AccessControl {
         value = ocp.boolParams[name];
     }
 
-    function getPolicyIntParam (uint ocpId, string memory name) public view
+    function getOCPIntParam (uint ocpId, string memory name) public view
         returns (int value) {
         OCP storage ocp = ocps[ocpId];
         value = ocp.intParams[name];
     }
 
-    function getPolicyStringParam (uint ocpId, string memory name) public view
+    function getOCPStringParam (uint ocpId, string memory name) public view
         returns (string memory value) {
         OCP storage ocp = ocps[ocpId];
         value = ocp.stringParams[name];

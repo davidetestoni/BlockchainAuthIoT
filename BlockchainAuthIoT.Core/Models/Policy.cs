@@ -1,7 +1,4 @@
-﻿using BlockchainAuthIoT.Core.Utils;
-using Nethereum.ABI.FunctionEncoding.Attributes;
-using System;
-using System.Numerics;
+﻿using Nethereum.ABI.FunctionEncoding.Attributes;
 
 namespace BlockchainAuthIoT.Core.Models
 {
@@ -9,16 +6,11 @@ namespace BlockchainAuthIoT.Core.Models
     public class Policy
     {
         public uint Id { get; set; } = 0;
-        public DateTime StartTime => StartTimeUnix.ToDateTimeUtc();
-        public DateTime Expiration => ExpirationUnix.ToDateTimeUtc();
 
-        [Parameter("string", 1)]
-        public string Resource { get; set; }
+        [Parameter("bytes32", 1)]
+        public byte[] HashCode { get; set; }
 
-        [Parameter("uint256", 2)]
-        public BigInteger StartTimeUnix { get; set; }
-
-        [Parameter("uint256", 3)]
-        public BigInteger ExpirationUnix { get; set; }
+        [Parameter("string", 2)]
+        public string ExternalResource { get; set; }
     }
 }
