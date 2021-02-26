@@ -3,52 +3,47 @@ pragma solidity >=0.7.0 <0.8.0;
 
 contract AccessControl {
 
-    // Allow policy (default deny)
-    struct Policy {
+    // NOTE: We could use json-serialized strings instead of hashes
+    // (or instead of parameters for the on-chain policies) but it's expensive
+
+    // A policy that lives on-chain (more expensive but can be used as fallback
+    // when remote policies cannot be retrieved for any reason)
+    struct OCP {
         string resource; // The name of the remote endpoint or resource
         uint256 startTime; // When this policy becomes valid
         uint256 expiration; // When this policy should be voided (unix epoch)
-
         mapping (string => bool) boolParams; // e.g. "subresourceAccess" => true
         mapping (string => int) intParams; // e.g. "querySize" => 10
         mapping (string => string) stringParams; // e.g. "environment" => "test"
     }
 
+    // A policy proposal
     struct Proposal {
-        bool finalized;
-        bool approved;
-        string resource;
-        uint256 startTime;
-        uint256 duration;
-        BoolParam[] boolParams;
-        IntParam[] intParams;
-        StringParam[] stringParams;
+        bool approved; // Whether the proposal has been approved
+        bytes32 hashCode; // The hash of the proposal for verification
+        string externalResource; // A link to the policy file to be reviewed
     }
 
-    struct BoolParam {
-        string name;
-        bool value;
-    }
-
-    struct IntParam {
-        string name;
-        int value;
-    }
-
-    struct StringParam {
-        string name;
-        string value;
+    struct Policy {
+        bytes32 hashCode; // A hash of the proposal
+        string externalResource; // A link to the policy file to be reviewed
     }
 
     bool public initialized = false; // Whether the contract has been initialized
     address public owner; // The admin that created the contract
     address[] public admins; // The admins that can propose policy changes
     address user; // The user that signed this contract
-    mapping(uint => Policy) public policies; // The active policies for the current user
+    mapping(uint => OCP) public ocps; // The on-chain policies for the user
+    mapping(uint => Policy) public policies; // The off-chain policies for the user
     mapping(uint => Proposal) public proposals; // The policies proposed by the user
-    uint public policiesCount; // Used to generate incremental policy IDs
-    uint public proposalsCount; // Used to generate incremental proposal IDs
-    uint public adminsCount; // The number of admins (used for enumeration)
+    
+    // Used to generate incremental IDs
+    uint public ocpsCount;
+    uint public policiesCount;
+    uint public proposalsCount;
+
+    // Used for enumeration
+    uint public adminsCount; 
 
     constructor (address signer) {
         // Set the creator as owner and admin
@@ -133,56 +128,57 @@ contract AccessControl {
         initialized = true;
     }
 
-    // Only admins are able to add policies, when the contract is not
-    // yet initialized
-    function createPolicy (string memory resource, uint256 startTime, uint256 expiration)
+    // Only admins are able to add off-chain and on-chain policies,
+    // when the contract is not yet initialized
+    function createPolicy (bytes32 hashCode, string memory externalResource) 
         public onlyAdmin onlyNotInitialized {
             uint policyId = policiesCount++;
             Policy storage newPolicy = policies[policyId];
-            newPolicy.resource = resource;
-            newPolicy.startTime = startTime;
-            newPolicy.expiration = expiration;
-
-            emit PolicyAdded(policyId);
+            newPolicy.hashCode = hashCode;
+            newPolicy.externalResource = externalResource;
     }
 
-    function setPolicyBoolParam (uint policyId, string memory name, bool value)
+    function createOCP (string memory resource, uint256 startTime, uint256 expiration)
         public onlyAdmin onlyNotInitialized {
-            Policy storage policy = policies[policyId];
-            policy.boolParams[name] = value;
+            uint ocpId = ocpsCount++;
+            OCP storage ocp = ocps[ocpId];
+            ocp.resource = resource;
+            ocp.startTime = startTime;
+            ocp.expiration = expiration;
+
+            emit PolicyAdded(ocpId);
     }
 
-    function setPolicyIntParam (uint policyId, string memory name, int value)
+    function setOCPBoolParam (uint ocpId, string memory name, bool value)
         public onlyAdmin onlyNotInitialized {
-            Policy storage policy = policies[policyId];
-            policy.intParams[name] = value;
+            OCP storage ocp = ocps[ocpId];
+            ocp.boolParams[name] = value;
     }
 
-    function setPolicyStringParam (uint policyId, string memory name,
+    function setOCPIntParam (uint ocpId, string memory name, int value)
+        public onlyAdmin onlyNotInitialized {
+            OCP storage ocp = ocps[ocpId];
+            ocp.intParams[name] = value;
+    }
+
+    function setOCPStringParam (uint ocpId, string memory name,
         string memory value) public onlyAdmin onlyNotInitialized {
-            Policy storage policy = policies[policyId];
-            policy.stringParams[name] = value;
+            OCP storage ocp = ocps[ocpId];
+            ocp.stringParams[name] = value;
     }
 
-    // Admins can approve proposals
-    function approveProposal (uint proposalId) public onlyAdmin onlyInitialized
-        returns (uint policyId) {
-            Proposal storage proposal = proposals[proposalId];
-            require (proposal.finalized, "Proposal not finalized");
-            proposal.approved = true;
+    // Admins can approve proposals and promote them to policies
+    function approveProposal (uint proposalId) public onlyAdmin onlyInitialized {
+        Proposal storage proposal = proposals[proposalId];
+        require (!proposal.approved, "Proposal already approved");
+        proposal.approved = true;
 
-            // Create a new policy based on that proposal
-            policyId = policiesCount++;
-            Policy storage policy = policies[policyId];
-            policy.resource = proposal.resource;
-            // TODO: Fix porting over params
-            //policy.boolParams = proposal.boolParams;
-            //policy.intParams = proposal.intParams;
-            //policy.stringParams = proposal.stringParams;
-            policy.startTime = proposal.startTime;
-            policy.expiration = proposal.startTime + proposal.duration;
+        uint policyId = policiesCount++;
+        Policy storage policy = policies[policyId];
+        policy.hashCode = proposal.hashCode;
+        policy.externalResource = proposal.externalResource;
 
-            emit ProposalApproved(proposalId, policyId);
+        emit ProposalApproved(proposalId, policyId);
     }
 
     /*
@@ -194,53 +190,13 @@ contract AccessControl {
     // Users are able to create proposals to request access to additional
     // resources (and expand the contract). An admin may then approve the
     // proposal once it's finalized
-    function createProposal (string memory resource, uint256 startTime,
-        uint256 duration) public onlyUser onlyInitialized
-        returns (uint proposalId) {
-            proposalId = proposalsCount++;
+    function createProposal (bytes32 hashCode, string memory externalResource) 
+        public onlyUser onlyInitialized {
+            uint proposalId = proposalsCount++;
             Proposal storage newProposal = proposals[proposalId];
             newProposal.approved = false;
-            newProposal.finalized = false;
-            newProposal.resource = resource;
-            newProposal.startTime = startTime;
-            newProposal.duration = duration;
-    }
-
-    function setProposalBoolParam (uint proposalId, string memory name, bool value)
-        public onlyUser onlyInitialized {
-            Proposal storage proposal = proposals[proposalId];
-            require (!proposal.finalized, "Proposal already finalized");
-            BoolParam storage param;
-            param.name = name;
-            param.value = value;
-            proposal.boolParams.push(param);
-    }
-
-    function setProposalIntParam (uint proposalId, string memory name, int value)
-        public onlyUser onlyInitialized {
-            Proposal storage proposal = proposals[proposalId];
-            require (!proposal.finalized, "Proposal already finalized");
-            IntParam storage param;
-            param.name = name;
-            param.value = value;
-            proposal.intParams.push(param);
-    }
-
-    function setProposalStringParam (uint proposalId, string memory name,
-        string memory value) public onlyUser onlyInitialized {
-            Proposal storage proposal = proposals[proposalId];
-            require (!proposal.finalized, "Proposal already finalized");
-            StringParam storage param;
-            param.name = name;
-            param.value = value;
-            proposal.stringParams.push(param);
-    }
-
-    function finalizeProposal (uint proposalId) public onlyUser onlyInitialized {
-        Proposal storage proposal = proposals[proposalId];
-        require (!proposal.finalized, "Proposal already finalized");
-        proposal.finalized = true;
-        emit ProposalFinalized(proposalId);
+            newProposal.hashCode = hashCode;
+            newProposal.externalResource = externalResource;
     }
 
     /*
@@ -249,54 +205,23 @@ contract AccessControl {
     ===========================
     */
 
-    // Get parameter values of proposals
-    function getProposalBoolParam (uint proposalId, string memory name) public view
+    // Get parameter values of on-chain policies
+    function getOCPBoolParam (uint ocpId, string memory name) public view
         returns (bool value) {
-        Proposal storage proposal = proposals[proposalId];
-        for (uint i = 0; i < proposal.boolParams.length; i++) {
-            if (compareStrings(proposal.boolParams[i].name, name)) {
-                value = proposal.boolParams[i].value;
-            }
-        }
+        OCP storage ocp = ocps[ocpId];
+        value = ocp.boolParams[name];
     }
 
-    function getProposalIntParam (uint proposalId, string memory name) public view
+    function getPolicyIntParam (uint ocpId, string memory name) public view
         returns (int value) {
-        Proposal storage proposal = proposals[proposalId];
-        for (uint i = 0; i < proposal.boolParams.length; i++) {
-            if (compareStrings(proposal.boolParams[i].name, name)) {
-                value = proposal.intParams[i].value;
-            }
-        }
+        OCP storage ocp = ocps[ocpId];
+        value = ocp.intParams[name];
     }
 
-    function getProposalStringParam (uint proposalId, string memory name) public view
+    function getPolicyStringParam (uint ocpId, string memory name) public view
         returns (string memory value) {
-        Proposal storage proposal = proposals[proposalId];
-        for (uint i = 0; i < proposal.boolParams.length; i++) {
-            if (compareStrings(proposal.boolParams[i].name, name)) {
-                value = proposal.stringParams[i].value;
-            }
-        }
-    }
-
-    // Get parameter values of policies
-    function getPolicyBoolParam (uint policyId, string memory name) public view
-        returns (bool value) {
-        Policy storage policy = policies[policyId];
-        value = policy.boolParams[name];
-    }
-
-    function getPolicyIntParam (uint policyId, string memory name) public view
-        returns (int value) {
-        Policy storage policy = policies[policyId];
-        value = policy.intParams[name];
-    }
-
-    function getPolicyStringParam (uint policyId, string memory name) public view
-        returns (string memory value) {
-        Policy storage policy = policies[policyId];
-        value = policy.stringParams[name];
+        OCP storage ocp = ocps[ocpId];
+        value = ocp.stringParams[name];
     }
 
     /*
@@ -305,7 +230,6 @@ contract AccessControl {
     =================
     */
 
-    // Nothing to see here
     function compareStrings (string memory a, string memory b) internal pure
         returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
@@ -320,6 +244,5 @@ contract AccessControl {
     event AdminAdded (address admin, address sender);
     event AdminRemoved (address admin);
     event PolicyAdded (uint policyId);
-    event ProposalFinalized (uint proposalId);
     event ProposalApproved (uint proposalId, uint policyId);
 }
