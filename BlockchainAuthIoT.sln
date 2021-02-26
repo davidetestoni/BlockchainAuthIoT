@@ -7,9 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Core", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Tests", "BlockchainAuthIoT.Tests\BlockchainAuthIoT.Tests.csproj", "{289C75B2-80EE-4A90-B19E-9D5488BF6E04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.UserClient", "BlockchainAuthIoT.UserClient\BlockchainAuthIoT.UserClient.csproj", "{9E81651A-7DA5-4A74-B9D4-32948BD176E1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.AdminClient", "BlockchainAuthIoT.AdminClient\BlockchainAuthIoT.AdminClient.csproj", "{5C604811-1E61-4A0D-8C59-332547A960FB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.Client", "BlockchainAuthIoT.Client\BlockchainAuthIoT.Client.csproj", "{C385D4FB-CBCD-4040-B263-4F899A200A6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +23,10 @@ Global
 		{289C75B2-80EE-4A90-B19E-9D5488BF6E04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{289C75B2-80EE-4A90-B19E-9D5488BF6E04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{289C75B2-80EE-4A90-B19E-9D5488BF6E04}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9E81651A-7DA5-4A74-B9D4-32948BD176E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E81651A-7DA5-4A74-B9D4-32948BD176E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E81651A-7DA5-4A74-B9D4-32948BD176E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E81651A-7DA5-4A74-B9D4-32948BD176E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5C604811-1E61-4A0D-8C59-332547A960FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5C604811-1E61-4A0D-8C59-332547A960FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5C604811-1E61-4A0D-8C59-332547A960FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5C604811-1E61-4A0D-8C59-332547A960FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C385D4FB-CBCD-4040-B263-4F899A200A6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C385D4FB-CBCD-4040-B263-4F899A200A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C385D4FB-CBCD-4040-B263-4F899A200A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C385D4FB-CBCD-4040-B263-4F899A200A6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

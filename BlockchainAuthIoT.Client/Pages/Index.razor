@@ -1,0 +1,36 @@
+﻿@page "/"
+
+<EditForm Model="this">
+    <label>Contract address:</label>
+    <InputText @bind-Value="contractAddress" />
+    <button class="btn-sm btn-success" @onclick="LoadContract">Load</button>
+</EditForm>
+
+<EditForm Model="this">
+    <label>Signer address:</label>
+    <InputText @bind-Value="signerAddress" />
+    <button class="btn-sm btn-success" @onclick="DeployNewContract">Deploy New</button>
+</EditForm>
+
+@if (AccessControl.ContractLoaded)
+{
+    <span><b>Initialized:</b> @AccessControl.Initialized</span>
+    <br />
+
+    <label><b>Admins:</b></label>
+    <ul>
+        @foreach (var admin in AccessControl.Admins)
+        {
+            <li>
+                @admin
+                <button class="btn-sm btn-danger" @onclick="(async () => await RemoveAdmin(admin))"><span class="oi oi-x"></span></button>
+            </li>
+        }
+    </ul>
+
+    <EditForm Model="this">
+        <label>New admin:</label>
+        <InputText @bind-Value="newAdmin" />
+        <button class="btn btn-success" @onclick="AddAdmin"><span class="oi oi-plus"></span> Add</button>
+    </EditForm>
+}
