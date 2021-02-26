@@ -5,16 +5,13 @@ contract AccessControl {
 
     // Allow policy (default deny)
     struct Policy {
-        uint id; // The unique ID of the policy
         string resource; // The name of the remote endpoint or resource
         uint256 startTime; // When this policy becomes valid
         uint256 expiration; // When this policy should be voided (unix epoch)
 
-        // We cannot use mappings here because we cannot transfer a mapping
-        // from a proposal to a policy, only an array
-        BoolParam[] boolParams; // e.g. "subresourceAccess" => true
-        IntParam[] intParams; // e.g. "querySize" => 10
-        StringParam[] stringParams; // e.g. "environment" => "test"
+        mapping (string => bool) boolParams; // e.g. "subresourceAccess" => true
+        mapping (string => int) intParams; // e.g. "querySize" => 10
+        mapping (string => string) stringParams; // e.g. "environment" => "test"
     }
 
     struct Proposal {
@@ -57,6 +54,7 @@ contract AccessControl {
         // Set the creator as owner and admin
         owner = msg.sender;
         admins.push(msg.sender);
+        adminsCount = 1;
 
         // Set the user that signed the contract
         user = signer;
@@ -70,7 +68,7 @@ contract AccessControl {
 
     modifier onlyAdmin {
         bool isAdmin = false;
-        for (uint256 i = 0; i < admins.length; i++) {
+        for (uint i = 0; i < admins.length; i++) {
             if (msg.sender == admins[i]) {
                 isAdmin = true;
                 break;
@@ -108,14 +106,15 @@ contract AccessControl {
 
     function addAdmin (address newAdmin) public onlyAdmin {
         admins.push(newAdmin);
+        adminsCount++;
         emit AdminAdded(newAdmin, msg.sender);
     }
 
     function removeAdmin (address admin) public onlyOwner {
         require (admin != owner, "Cannot remove the owner");
         bool isAdmin = false;
-        uint256 index;
-        for (uint256 i = 0; i < admins.length; i++) {
+        uint index;
+        for (uint i = 0; i < admins.length; i++) {
             if (admin == admins[i]) {
                 isAdmin = true;
                 index = i;
@@ -136,39 +135,33 @@ contract AccessControl {
 
     // Only admins are able to add policies, when the contract is not
     // yet initialized
-    function createPolicy (string memory resource, uint256 expiration) public
-        onlyAdmin onlyNotInitialized returns (uint policyId) {
-            policyId = policiesCount++;
+    function createPolicy (string memory resource, uint256 startTime, uint256 expiration)
+        public onlyAdmin onlyNotInitialized {
+            uint policyId = policiesCount++;
             Policy storage newPolicy = policies[policyId];
             newPolicy.resource = resource;
+            newPolicy.startTime = startTime;
             newPolicy.expiration = expiration;
+
+            emit PolicyAdded(policyId);
     }
 
     function setPolicyBoolParam (uint policyId, string memory name, bool value)
         public onlyAdmin onlyNotInitialized {
             Policy storage policy = policies[policyId];
-            BoolParam storage param;
-            param.name = name;
-            param.value = value;
-            policy.boolParams.push(param);
+            policy.boolParams[name] = value;
     }
 
     function setPolicyIntParam (uint policyId, string memory name, int value)
         public onlyAdmin onlyNotInitialized {
             Policy storage policy = policies[policyId];
-            IntParam storage param;
-            param.name = name;
-            param.value = value;
-            policy.intParams.push(param);
+            policy.intParams[name] = value;
     }
 
     function setPolicyStringParam (uint policyId, string memory name,
         string memory value) public onlyAdmin onlyNotInitialized {
             Policy storage policy = policies[policyId];
-            StringParam storage param;
-            param.name = name;
-            param.value = value;
-            policy.stringParams.push(param);
+            policy.stringParams[name] = value;
     }
 
     // Admins can approve proposals
@@ -182,9 +175,10 @@ contract AccessControl {
             policyId = policiesCount++;
             Policy storage policy = policies[policyId];
             policy.resource = proposal.resource;
-            policy.boolParams = proposal.boolParams;
-            policy.intParams = proposal.intParams;
-            policy.stringParams = proposal.stringParams;
+            // TODO: Fix porting over params
+            //policy.boolParams = proposal.boolParams;
+            //policy.intParams = proposal.intParams;
+            //policy.stringParams = proposal.stringParams;
             policy.startTime = proposal.startTime;
             policy.expiration = proposal.startTime + proposal.duration;
 
@@ -256,30 +250,30 @@ contract AccessControl {
     */
 
     // Get parameter values of proposals
-    function getProposalBoolValue (uint proposalId, string memory name) public view
+    function getProposalBoolParam (uint proposalId, string memory name) public view
         returns (bool value) {
         Proposal storage proposal = proposals[proposalId];
-        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+        for (uint i = 0; i < proposal.boolParams.length; i++) {
             if (compareStrings(proposal.boolParams[i].name, name)) {
                 value = proposal.boolParams[i].value;
             }
         }
     }
 
-    function getProposalIntValue (uint proposalId, string memory name) public view
+    function getProposalIntParam (uint proposalId, string memory name) public view
         returns (int value) {
         Proposal storage proposal = proposals[proposalId];
-        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+        for (uint i = 0; i < proposal.boolParams.length; i++) {
             if (compareStrings(proposal.boolParams[i].name, name)) {
                 value = proposal.intParams[i].value;
             }
         }
     }
 
-    function getProposalStringValue (uint proposalId, string memory name) public view
+    function getProposalStringParam (uint proposalId, string memory name) public view
         returns (string memory value) {
         Proposal storage proposal = proposals[proposalId];
-        for (uint256 i = 0; i < proposal.boolParams.length; i++) {
+        for (uint i = 0; i < proposal.boolParams.length; i++) {
             if (compareStrings(proposal.boolParams[i].name, name)) {
                 value = proposal.stringParams[i].value;
             }
@@ -287,34 +281,22 @@ contract AccessControl {
     }
 
     // Get parameter values of policies
-    function getPolicyBoolValue (uint policyId, string memory name) public view
+    function getPolicyBoolParam (uint policyId, string memory name) public view
         returns (bool value) {
         Policy storage policy = policies[policyId];
-        for (uint256 i = 0; i < policy.boolParams.length; i++) {
-            if (compareStrings(policy.boolParams[i].name, name)) {
-                value = policy.boolParams[i].value;
-            }
-        }
+        value = policy.boolParams[name];
     }
 
-    function getPolicyIntValue (uint policyId, string memory name) public view
+    function getPolicyIntParam (uint policyId, string memory name) public view
         returns (int value) {
         Policy storage policy = policies[policyId];
-        for (uint256 i = 0; i < policy.boolParams.length; i++) {
-            if (compareStrings(policy.boolParams[i].name, name)) {
-                value = policy.intParams[i].value;
-            }
-        }
+        value = policy.intParams[name];
     }
 
-    function getPolicyStringValue (uint policyId, string memory name) public view
+    function getPolicyStringParam (uint policyId, string memory name) public view
         returns (string memory value) {
         Policy storage policy = policies[policyId];
-        for (uint256 i = 0; i < policy.boolParams.length; i++) {
-            if (compareStrings(policy.boolParams[i].name, name)) {
-                value = policy.stringParams[i].value;
-            }
-        }
+        value = policy.stringParams[name];
     }
 
     /*
