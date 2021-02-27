@@ -1,4 +1,5 @@
-﻿using BlockchainAuthIoT.Core;
+﻿using BlockchainAuthIoT.Client.Models;
+using BlockchainAuthIoT.Core;
 using BlockchainAuthIoT.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,7 @@ namespace BlockchainAuthIoT.Client.Services
             await RefreshProposals();
         }
 
+        #region Admins and Contract Management
         public async Task AddAdmin(string adminAddress)
         {
             EnsureLoaded();
@@ -71,7 +73,54 @@ namespace BlockchainAuthIoT.Client.Services
             await contract.InitializeContract(accountProvider.Address);
             initialized = await contract.IsInitialized();
         }
+        #endregion
 
+        #region OCPs (On-Chain Policies) Management
+        public async Task CreateOCP(OCPModel model)
+        {
+            EnsureLoaded();
+            await contract.CreateOCP(accountProvider.Address, model.Resource, model.StartTime, model.Expiration);
+            await RefreshOCPs();
+        }
+
+        public Task<bool> GetOCPBoolParam(OCP ocp, string name)
+        {
+            EnsureLoaded();
+            return contract.GetOCPBoolParam(ocp, name);
+        }
+
+        public Task<int> GetOCPIntParam(OCP ocp, string name)
+        {
+            EnsureLoaded();
+            return contract.GetOCPIntParam(ocp, name);
+        }
+
+        public Task<string> GetOCPStringParam(OCP ocp, string name)
+        {
+            EnsureLoaded();
+            return contract.GetOCPStringParam(ocp, name);
+        }
+
+        public Task SetOCPBoolParam(OCP ocp, string name, bool value)
+        {
+            EnsureLoaded();
+            return contract.SetOCPBoolParam(accountProvider.Address, ocp, name, value);
+        }
+
+        public Task SetOCPIntParam(OCP ocp, string name, int value)
+        {
+            EnsureLoaded();
+            return contract.SetOCPIntParam(accountProvider.Address, ocp, name, value);
+        }
+
+        public Task SetOCPStringParam(OCP ocp, string name, string value)
+        {
+            EnsureLoaded();
+            return contract.SetOCPStringParam(accountProvider.Address, ocp, name, value);
+        }
+        #endregion
+
+        #region Refresh
         private async Task RefreshAdmins()
             => admins = (await contract.GetAdmins()).ToList();
 
@@ -83,6 +132,7 @@ namespace BlockchainAuthIoT.Client.Services
 
         private async Task RefreshProposals()
             => proposals = (await contract.GetProposals()).ToList();
+        #endregion
 
         private void EnsureLoaded()
         {

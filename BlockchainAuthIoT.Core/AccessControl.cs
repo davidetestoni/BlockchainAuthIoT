@@ -1,7 +1,6 @@
 ﻿using BlockchainAuthIoT.Core.Exceptions;
 using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.Core.Utils;
-using Nethereum.ABI;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;

@@ -2,6 +2,8 @@
 
 html, body {
     font-family: Courier New, Courier, monospace;
+    color: white;
+    background-color: #222;
 }
 
 a, .btn-link {
@@ -48,3 +50,46 @@ a, .btn-link {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+input:not([type=checkbox]), textarea {
+    background-color: #111;
+    color: white;
+    border: 1px solid black;
+    padding: 3px 6px 3px 6px;
+}
+
+textarea {
+    height: 150px;
+}
+
+select {
+    margin-left: 5px !important;
+    background-color: #111;
+    color: white;
+    border-radius: 5px;
+    border: 1px solid black;
+    padding: 3px;
+}
+
+hr {
+    background-color: grey;
+}
+
+.btn-sm, .btn {
+    color: black;
+    font-weight: bold;
+}
+
+.sidebar {
+    background-color: #111 !important;
+    background-image: none !important;
+    display: none; /* Remove this to display the sidebar */
+}
+
+h5 {
+    color: orange;
+}
+
+h6 {
+    color: yellow;
+}

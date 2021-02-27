@@ -1,4 +1,6 @@
-﻿using BlockchainAuthIoT.Client.Services;
+﻿using BlockchainAuthIoT.Client.Models;
+using BlockchainAuthIoT.Client.Services;
+using BlockchainAuthIoT.Core.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
@@ -13,6 +15,7 @@ namespace BlockchainAuthIoT.Client.Pages
         private string contractAddress = string.Empty;
         private string signerAddress = string.Empty;
         private string newAdmin = string.Empty;
+        private OCPModel newOCP = new();
 
         protected override void OnInitialized()
         {
@@ -55,6 +58,7 @@ namespace BlockchainAuthIoT.Client.Pages
             {
                 await AccessControl.AddAdmin(newAdmin);
                 await AlertSuccess($"Admin {newAdmin} added");
+                newAdmin = string.Empty;
             }
             catch (Exception ex)
             {
@@ -75,6 +79,120 @@ namespace BlockchainAuthIoT.Client.Pages
             }
         }
 
+        private async Task InitializeContract()
+        {
+            try
+            {
+                await AccessControl.InitializeContract();
+                await AlertSuccess("Contract initialized");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task CreateOCP()
+        {
+            try
+            {
+                await AccessControl.CreateOCP(newOCP);
+                await AlertSuccess("Created new OCP");
+                newOCP = new();
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task GetOCPBoolParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = await AccessControl.GetOCPBoolParam(ocp, name);
+                await AlertSuccess($"The value is: {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task GetOCPIntParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = await AccessControl.GetOCPIntParam(ocp, name);
+                await AlertSuccess($"The value is: {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task GetOCPStringParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = await AccessControl.GetOCPStringParam(ocp, name);
+                await AlertSuccess($"The value is: {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task SetOCPBoolParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = bool.Parse(await GetPrompt("Enter the bool parameter value"));
+                await AccessControl.SetOCPBoolParam(ocp, name, value);
+                await AlertSuccess($"Added bool parameter {name} = {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task SetOCPIntParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = int.Parse(await GetPrompt("Enter the int parameter value"));
+                await AccessControl.SetOCPIntParam(ocp, name, value);
+                await AlertSuccess($"Added int parameter {name} = {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task SetOCPStringParam(OCP ocp)
+        {
+            try
+            {
+                var name = await GetPrompt("Enter the parameter name");
+                var value = await GetPrompt("Enter the string parameter value");
+                await AccessControl.SetOCPStringParam(ocp, name, value);
+                await AlertSuccess($"Added string parameter {name} = {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
         private async Task AlertException(Exception ex)
         {
             await js.InvokeVoidAsync("console.log", ex.ToString());
@@ -86,5 +204,8 @@ namespace BlockchainAuthIoT.Client.Pages
             await js.InvokeVoidAsync("console.log", message);
             await js.InvokeVoidAsync("alert", message);
         }
+
+        private ValueTask<string> GetPrompt(string message) =>
+            js.InvokeAsync<string>("prompt", message);
     }
 }
