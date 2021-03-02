@@ -16,6 +16,8 @@ namespace BlockchainAuthIoT.Client.Pages
         private string signerAddress = string.Empty;
         private string newAdmin = string.Empty;
         private OCPModel newOCP = new();
+        private PolicyModel newPolicy = new();
+        private ProposalModel newProposal = new();
 
         protected override void OnInitialized()
         {
@@ -186,6 +188,47 @@ namespace BlockchainAuthIoT.Client.Pages
                 var value = await GetPrompt("Enter the string parameter value");
                 await AccessControl.SetOCPStringParam(ocp, name, value);
                 await AlertSuccess($"Added string parameter {name} = {value}");
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task CreatePolicy()
+        {
+            try
+            {
+                await AccessControl.CreatePolicy(newPolicy);
+                await AlertSuccess("Created new policy");
+                newPolicy = new();
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task CreateProposal()
+        {
+            try
+            {
+                await AccessControl.CreateProposal(newProposal);
+                await AlertSuccess("Created new proposal");
+                newProposal = new();
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+
+        private async Task ApproveProposal(Proposal proposal)
+        {
+            try
+            {
+                await AccessControl.ApproveProposal(proposal);
+                await AlertSuccess("Proposal approved");
             }
             catch (Exception ex)
             {

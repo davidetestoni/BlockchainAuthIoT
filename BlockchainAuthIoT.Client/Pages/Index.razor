@@ -67,4 +67,42 @@
         <InputDateTime @bind-Value="newOCP.Expiration" />
         <button class="btn-sm btn-success" @onclick="CreateOCP"><span class="oi oi-plus"></span> Create</button>
     </EditForm>
+    <hr />
+
+    <h5>Policies</h5>
+    <ul>
+        @foreach (var policy in AccessControl.Policies)
+        {
+            <li>
+                <b>External resource:</b> @policy.ExternalResource | <b>Hash code:</b> @Convert.ToBase64String(policy.HashCode)
+            </li>
+        }
+    </ul>
+
+    <EditForm Model="newPolicy">
+        <h6>Create new</h6>
+        <label>External resource:</label>
+        <InputText @bind-Value="newPolicy.ExternalResource" />
+        <button class="btn-sm btn-success" @onclick="CreatePolicy"><span class="oi oi-plus"></span> Create</button>
+    </EditForm>
+    <hr />
+
+    <h5>Proposals</h5>
+    <ul>
+        @foreach (var proposal in AccessControl.Proposals)
+        {
+            <li>
+                <b>External resource:</b> @proposal.ExternalResource | <b>Hash code:</b> @Convert.ToBase64String(proposal.HashCode)
+                | <b>Approved:</b> @proposal.Approved
+                <button class="btn-sm btn-success" @onclick="(async () => await ApproveProposal(proposal))">Approve</button>
+            </li>
+        }
+    </ul>
+
+    <EditForm Model="newProposal">
+        <h6>Create new</h6>
+        <label>External resource:</label>
+        <InputText @bind-Value="newProposal.ExternalResource" />
+        <button class="btn-sm btn-success" @onclick="CreateProposal"><span class="oi oi-plus"></span> Create</button>
+    </EditForm>
 }

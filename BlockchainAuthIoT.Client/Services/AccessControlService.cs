@@ -10,8 +10,10 @@ namespace BlockchainAuthIoT.Client.Services
 {
     public class AccessControlService
     {
+        private readonly string emptyAddress = "0x0000000000000000000000000000000000000000";
         private readonly IWeb3Provider web3Provider;
         private readonly IAccountProvider accountProvider;
+        private readonly IHashCodeService hashCodeService;
         private AccessControl contract;
 
         private bool initialized = false;
@@ -28,10 +30,12 @@ namespace BlockchainAuthIoT.Client.Services
         public IEnumerable<Proposal> Proposals => proposals;
         public bool Initialized => initialized;
 
-        public AccessControlService(IWeb3Provider web3Provider, IAccountProvider accountProvider)
+        public AccessControlService(IWeb3Provider web3Provider, IAccountProvider accountProvider,
+            IHashCodeService hashCodeService)
         {
             this.web3Provider = web3Provider;
             this.accountProvider = accountProvider;
+            this.hashCodeService = hashCodeService;
         }
 
         public async Task DeployNewContract(string signer)
@@ -120,9 +124,37 @@ namespace BlockchainAuthIoT.Client.Services
         }
         #endregion
 
+        #region Policies
+        public async Task CreatePolicy(PolicyModel model)
+        {
+            EnsureLoaded();
+            var hashCode = await hashCodeService.ComputeHashCode(model.ExternalResource);
+            await contract.CreatePolicy(accountProvider.Address, hashCode, model.ExternalResource);
+            await RefreshPolicies();
+        }
+        #endregion
+
+        #region Proposals
+        public async Task CreateProposal(ProposalModel model)
+        {
+            EnsureLoaded();
+            var hashCode = await hashCodeService.ComputeHashCode(model.ExternalResource);
+            await contract.CreateProposal(accountProvider.Address, hashCode, model.ExternalResource);
+            await RefreshProposals();
+        }
+
+        public async Task ApproveProposal(Proposal proposal)
+        {
+            EnsureLoaded();
+            await contract.ApproveProposal(accountProvider.Address, proposal);
+            await RefreshProposals();
+            await RefreshPolicies();
+        }
+        #endregion
+
         #region Refresh
         private async Task RefreshAdmins()
-            => admins = (await contract.GetAdmins()).ToList();
+            => admins = (await contract.GetAdmins()).Where(a => a != emptyAddress).ToList();
 
         private async Task RefreshOCPs()
             => ocps = (await contract.GetOCPs()).ToList();

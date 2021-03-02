@@ -31,6 +31,7 @@ namespace BlockchainAuthIoT.Client
             services.AddSingleton<IAccountProvider>(service =>
                 SetupTestAccountProvider(service.GetService<IWeb3Provider>().Web3));
             services.AddSingleton<AccessControlService>();
+            services.AddSingleton<IHashCodeService, RemoteHashCodeService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

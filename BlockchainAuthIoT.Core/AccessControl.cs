@@ -32,6 +32,7 @@ namespace BlockchainAuthIoT.Core
             this.contract = contract;
         }
 
+        #region Deployment and Loading
         /// <summary>
         /// Deploys a new <see cref="AccessControl"/> contract on the blockchain.
         /// </summary>
@@ -70,7 +71,9 @@ namespace BlockchainAuthIoT.Core
                 Owner = await contract.GetFunction("owner").CallAsync<string>()
             };
         }
+        #endregion
 
+        #region Admins and Contract Management
         /// <summary>
         /// Checks if the contract has been initialized.
         /// </summary>
@@ -97,7 +100,6 @@ namespace BlockchainAuthIoT.Core
             return admins.ToArray();
         }
 
-        #region Admins and Contract Management
         /// <summary>
         /// Adds the given <paramref name="adminAddress"/> to the admins (only an admin can perform this).
         /// </summary>
