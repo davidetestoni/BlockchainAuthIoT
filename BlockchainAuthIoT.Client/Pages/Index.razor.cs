@@ -10,6 +10,7 @@ namespace BlockchainAuthIoT.Client.Pages
 {
     public partial class Index
     {
+        [Inject] private TestAccountProvider AccountProvider { get; set; }
         [Inject] private AccessControlService AccessControl { get; set; }
 
         private string contractAddress = string.Empty;

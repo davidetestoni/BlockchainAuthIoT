@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Nethereum.Web3;
-using System;
 
 namespace BlockchainAuthIoT.Client
 {
@@ -28,8 +26,7 @@ namespace BlockchainAuthIoT.Client
             // Add the providers and unlock the account (only for testing)
             // TODO: Convert this to actual production code
             services.AddSingleton<IWeb3Provider, TestWeb3Provider>();
-            services.AddSingleton<IAccountProvider>(service =>
-                SetupTestAccountProvider(service.GetService<IWeb3Provider>().Web3));
+            services.AddSingleton<TestAccountProvider>();
             services.AddSingleton<AccessControlService>();
             services.AddSingleton<IHashCodeService, RemoteHashCodeService>();
         }
@@ -58,20 +55,6 @@ namespace BlockchainAuthIoT.Client
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
-        }
-
-        private TestAccountProvider SetupTestAccountProvider(Web3 web3)
-        {
-            var accounts = web3.Eth.Accounts.SendRequestAsync().Result;
-
-            Console.WriteLine("Unlocked accounts (for debug purposes):");
-            foreach (var account in accounts)
-            {
-                Console.WriteLine(account);
-            }
-
-            web3.Personal.UnlockAccount.SendRequestAsync(accounts[0], "password", 120).Wait();
-            return new TestAccountProvider(accounts[0]);
         }
     }
 }

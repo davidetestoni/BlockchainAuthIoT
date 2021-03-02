@@ -1,13 +1,25 @@
 ﻿@page "/"
 
+<h5>Identity</h5>
+<EditForm Model="AccountProvider.CurrentIdentity">
+    <label>Current identity:</label>
+    <InputSelect @bind-Value="AccountProvider.CurrentIdentity">
+        @foreach (var identity in AccountProvider.Identities)
+        {
+            <option value="@identity">@identity</option>
+        }
+    </InputSelect>
+</EditForm>
+<hr />
+
 <h5>Contract Loading / Deployment</h5>
-<EditForm Model="this">
+<EditForm Model="contractAddress">
     <label>Contract address:</label>
     <InputText @bind-Value="contractAddress" />
     <button class="btn-sm btn-success" @onclick="LoadContract">Load</button>
 </EditForm>
 
-<EditForm Model="this">
+<EditForm Model="signerAddress">
     <label>Signer address:</label>
     <InputText @bind-Value="signerAddress" />
     <button class="btn-sm btn-success" @onclick="DeployNewContract">Deploy New</button>

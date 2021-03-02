@@ -12,7 +12,7 @@ namespace BlockchainAuthIoT.Client.Services
     {
         private readonly string emptyAddress = "0x0000000000000000000000000000000000000000";
         private readonly IWeb3Provider web3Provider;
-        private readonly IAccountProvider accountProvider;
+        private readonly TestAccountProvider accountProvider;
         private readonly IHashCodeService hashCodeService;
         private AccessControl contract;
 
@@ -30,7 +30,7 @@ namespace BlockchainAuthIoT.Client.Services
         public IEnumerable<Proposal> Proposals => proposals;
         public bool Initialized => initialized;
 
-        public AccessControlService(IWeb3Provider web3Provider, IAccountProvider accountProvider,
+        public AccessControlService(IWeb3Provider web3Provider, TestAccountProvider accountProvider,
             IHashCodeService hashCodeService)
         {
             this.web3Provider = web3Provider;
@@ -40,7 +40,7 @@ namespace BlockchainAuthIoT.Client.Services
 
         public async Task DeployNewContract(string signer)
         {
-            var contract = await AccessControl.Deploy(web3Provider.Web3, accountProvider.Address, signer);
+            var contract = await AccessControl.Deploy(web3Provider.Web3, accountProvider.CurrentIdentity, signer);
             await LoadContract(contract.Address);
         }
 
@@ -60,21 +60,21 @@ namespace BlockchainAuthIoT.Client.Services
         public async Task AddAdmin(string adminAddress)
         {
             EnsureLoaded();
-            await contract.AddAdmin(accountProvider.Address, adminAddress);
+            await contract.AddAdmin(accountProvider.CurrentIdentity, adminAddress);
             await RefreshAdmins();
         }
 
         public async Task RemoveAdmin(string adminAddress)
         {
             EnsureLoaded();
-            await contract.RemoveAdmin(accountProvider.Address, adminAddress);
+            await contract.RemoveAdmin(accountProvider.CurrentIdentity, adminAddress);
             await RefreshAdmins();
         }
 
         public async Task InitializeContract()
         {
             EnsureLoaded();
-            await contract.InitializeContract(accountProvider.Address);
+            await contract.InitializeContract(accountProvider.CurrentIdentity);
             initialized = await contract.IsInitialized();
         }
         #endregion
@@ -83,7 +83,7 @@ namespace BlockchainAuthIoT.Client.Services
         public async Task CreateOCP(OCPModel model)
         {
             EnsureLoaded();
-            await contract.CreateOCP(accountProvider.Address, model.Resource, model.StartTime, model.Expiration);
+            await contract.CreateOCP(accountProvider.CurrentIdentity, model.Resource, model.StartTime, model.Expiration);
             await RefreshOCPs();
         }
 
@@ -108,19 +108,19 @@ namespace BlockchainAuthIoT.Client.Services
         public Task SetOCPBoolParam(OCP ocp, string name, bool value)
         {
             EnsureLoaded();
-            return contract.SetOCPBoolParam(accountProvider.Address, ocp, name, value);
+            return contract.SetOCPBoolParam(accountProvider.CurrentIdentity, ocp, name, value);
         }
 
         public Task SetOCPIntParam(OCP ocp, string name, int value)
         {
             EnsureLoaded();
-            return contract.SetOCPIntParam(accountProvider.Address, ocp, name, value);
+            return contract.SetOCPIntParam(accountProvider.CurrentIdentity, ocp, name, value);
         }
 
         public Task SetOCPStringParam(OCP ocp, string name, string value)
         {
             EnsureLoaded();
-            return contract.SetOCPStringParam(accountProvider.Address, ocp, name, value);
+            return contract.SetOCPStringParam(accountProvider.CurrentIdentity, ocp, name, value);
         }
         #endregion
 
@@ -129,7 +129,7 @@ namespace BlockchainAuthIoT.Client.Services
         {
             EnsureLoaded();
             var hashCode = await hashCodeService.ComputeHashCode(model.ExternalResource);
-            await contract.CreatePolicy(accountProvider.Address, hashCode, model.ExternalResource);
+            await contract.CreatePolicy(accountProvider.CurrentIdentity, hashCode, model.ExternalResource);
             await RefreshPolicies();
         }
         #endregion
@@ -139,14 +139,14 @@ namespace BlockchainAuthIoT.Client.Services
         {
             EnsureLoaded();
             var hashCode = await hashCodeService.ComputeHashCode(model.ExternalResource);
-            await contract.CreateProposal(accountProvider.Address, hashCode, model.ExternalResource);
+            await contract.CreateProposal(accountProvider.CurrentIdentity, hashCode, model.ExternalResource);
             await RefreshProposals();
         }
 
         public async Task ApproveProposal(Proposal proposal)
         {
             EnsureLoaded();
-            await contract.ApproveProposal(accountProvider.Address, proposal);
+            await contract.ApproveProposal(accountProvider.CurrentIdentity, proposal);
             await RefreshProposals();
             await RefreshPolicies();
         }
