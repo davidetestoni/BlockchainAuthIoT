@@ -1,9 +1,10 @@
 ﻿using System;
 
-namespace BlockchainAuthIoT.Models
+namespace BlockchainAuthIoT.DataProvider.Entities
 {
-    public class SampleData
+    public class DataEntity
     {
+        public int Id { get; set; }
         public DateTime Date { get; set; }
         public string Name { get; set; }
         public string Device { get; set; }
