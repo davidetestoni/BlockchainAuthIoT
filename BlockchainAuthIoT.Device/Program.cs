@@ -9,17 +9,40 @@ namespace BlockchainAuthIoT.Device
 {
     static class Program
     {
-        static readonly string queueName = "iot";
-        static readonly Random rand = new();
+        private static readonly string queueName = "iot";
+        private static readonly Random rand = new();
 
         static void Main(string[] args)
         {
+            var DEVICE_NAME = Environment.GetEnvironmentVariable("DEVICE_NAME") ?? "Sensor_1";
+            var DEVICE_SLEEP = Environment.GetEnvironmentVariable("DEVICE_SLEEP") ?? "5000";
+            
+            if (!int.TryParse(DEVICE_SLEEP, out int sleepTime))
+            {
+                Console.WriteLine("DEVICE_SLEEP must contain an integer value! Using default (5000 ms)");
+                sleepTime = 5000;
+            }
+
             var factory = new ConnectionFactory
             {
-                Uri = new Uri("amqp://guest:guest@localhost:5672")
+                Uri = new Uri("amqp://guest:guest@rabbitmq:5672")
             };
 
-            using var connection = factory.CreateConnection();
+            IConnection connection = null;
+
+            while (connection == null)
+            {
+                try
+                {
+                    connection = factory.CreateConnection();
+                }
+                catch
+                {
+                    Console.WriteLine("Cannot connect to RabbitMQ, trying again in 5 seconds...");
+                    Thread.Sleep(5000);
+                }
+            }
+
             using var channel = connection.CreateModel();
 
             channel.QueueDeclare(queueName,
@@ -36,15 +59,17 @@ namespace BlockchainAuthIoT.Device
                 {
                     Date = DateTime.Now,
                     Name = "Temperature",
-                    Device = "Sensor_1",
+                    Device = DEVICE_NAME,
                     Data = Encoding.UTF8.GetBytes(temperature.ToString())
                 };
 
-                var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+                var json = JsonConvert.SerializeObject(message);
+                var body = Encoding.UTF8.GetBytes(json);
 
                 channel.BasicPublish("", queueName, null, body);
+                Console.WriteLine($"Published {json}");
 
-                Thread.Sleep(5000);
+                Thread.Sleep(sleepTime);
             }
         }
     }

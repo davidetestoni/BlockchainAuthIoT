@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  device:
+    image: "davidetestoni/iotdevice:latest"
+    environment:
+      - DEVICE_NAME=Sensor_1
+      - DEVICE_SLEEP=10000
+    links:
+      - rabbitmq
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: "rabbitmq"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
