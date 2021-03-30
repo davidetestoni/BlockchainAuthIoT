@@ -1,28 +1,51 @@
-﻿using RabbitMQ.Client;
+﻿using BlockchainAuthIoT.Models;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
+using System;
+using System.Text;
+using System.Threading;
 
 namespace BlockchainAuthIoT.Device
 {
-    class Program
+    static class Program
     {
+        static readonly string queueName = "iot";
+        static readonly Random rand = new();
+
         static void Main(string[] args)
         {
-            ConnectionFactory factory = new ConnectionFactory();
-            
-            factory.UserName = "guest";
-            factory.Password = "guest";
-            factory.VirtualHost = "/";
-            factory.HostName = "localhost";
+            var factory = new ConnectionFactory
+            {
+                Uri = new Uri("amqp://guest:guest@localhost:5672")
+            };
 
-            var connection = factory.CreateConnection();
-            var channel = connection.CreateModel();
+            using var connection = factory.CreateConnection();
+            using var channel = connection.CreateModel();
 
-            // TODO: Implement logic to send messages
+            channel.QueueDeclare(queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
 
-            channel.Close();
-            connection.Close();
+            while (true)
+            {
+                var temperature = rand.Next(20, 30);
 
-            channel.Dispose();
-            connection.Dispose();
+                var message = new SampleData
+                {
+                    Date = DateTime.Now,
+                    Name = "Temperature",
+                    Device = "Sensor_1",
+                    Data = Encoding.UTF8.GetBytes(temperature.ToString())
+                };
+
+                var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+
+                channel.BasicPublish("", queueName, null, body);
+
+                Thread.Sleep(5000);
+            }
         }
     }
 }
