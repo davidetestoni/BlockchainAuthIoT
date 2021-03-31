@@ -43,7 +43,7 @@ namespace BlockchainAuthIoT.Device
                 }
             }
 
-            using var channel = connection.CreateModel();
+            var channel = connection.CreateModel();
 
             channel.QueueDeclare(queueName,
                 durable: true,

@@ -5,6 +5,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Text;
+using System.Threading;
 
 namespace BlockchainAuthIoT.DataController
 {
@@ -14,16 +15,44 @@ namespace BlockchainAuthIoT.DataController
 
         static void Main(string[] args)
         {
-            using var db = new MySqlConnection("server=localhost;user=root;password=admin;database=iot");
-            db.Open();
+            var db = new MySqlConnection("server=mysql;user=root;password=admin;database=iot");
+            var dbOpen = false;
+
+            while (!dbOpen)
+            {
+                try
+                {
+                    db.Open();
+                    dbOpen = true;
+                }
+                catch
+                {
+                    Console.WriteLine("Cannot connect to the MySQL database, trying again in 5 seconds...");
+                    Thread.Sleep(5000);
+                }
+            }
 
             var factory = new ConnectionFactory
             {
-                Uri = new Uri("amqp://guest:guest@localhost:5672")
+                Uri = new Uri("amqp://guest:guest@rabbitmq:5672")
             };
 
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
+            IConnection connection = null;
+
+            while (connection == null)
+            {
+                try
+                {
+                    connection = factory.CreateConnection();
+                }
+                catch
+                {
+                    Console.WriteLine("Cannot connect to RabbitMQ, trying again in 5 seconds...");
+                    Thread.Sleep(5000);
+                }
+            }
+
+            var channel = connection.CreateModel();
 
             channel.QueueDeclare(queueName,
                 durable: true,
