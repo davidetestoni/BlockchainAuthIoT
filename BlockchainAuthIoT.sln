@@ -9,13 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Client", "BlockchainAuthIoT.Client\BlockchainAuthIoT.Client.csproj", "{C385D4FB-CBCD-4040-B263-4F899A200A6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.DataProvider", "BlockchainAuthIoT.DataProvider\BlockchainAuthIoT.DataProvider.csproj", "{609377C5-3494-4271-BB3F-AE44E2037A46}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.DataProvider", "BlockchainAuthIoT.DataProvider\BlockchainAuthIoT.DataProvider.csproj", "{609377C5-3494-4271-BB3F-AE44E2037A46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.Models", "BlockchainAuthIoT.Models\BlockchainAuthIoT.Models.csproj", "{BDC707AA-4F74-49CC-BB3F-807CB645352F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Models", "BlockchainAuthIoT.Models\BlockchainAuthIoT.Models.csproj", "{BDC707AA-4F74-49CC-BB3F-807CB645352F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.Device", "BlockchainAuthIoT.Device\BlockchainAuthIoT.Device.csproj", "{02D7E05E-335F-4969-8BF8-FA9224B3D493}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Device", "BlockchainAuthIoT.Device\BlockchainAuthIoT.Device.csproj", "{02D7E05E-335F-4969-8BF8-FA9224B3D493}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.DataController", "BlockchainAuthIoT.DataController\BlockchainAuthIoT.DataController.csproj", "{AF8635E4-092C-4A86-86CE-CB2AA7027355}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.DataController", "BlockchainAuthIoT.DataController\BlockchainAuthIoT.DataController.csproj", "{AF8635E4-092C-4A86-86CE-CB2AA7027355}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

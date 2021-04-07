@@ -20,7 +20,7 @@ services:
 
   # Data controller
   datacontroller:
-    image: "davidetestoni/datacontroller:latest"
+    image: "davidetestoni/iotdatacontroller:latest"
     links:
       - rabbitmq
     external_links:
@@ -28,11 +28,24 @@ services:
 
   # Data provider
   dataprovider:
-    image: "davidetestoni/dataprovider:latest"
+    image: "davidetestoni/iotdataprovider:latest"
+    ports:
+      - "3000:3000"
     links:
       - redis
     external_links:
       - mysql
+      - chain
+
+  # Client
+  client:
+    image: "davidetestoni/iotclient:latest"
+    ports:
+      - "4000:4000"
+    links:
+      - dataprovider
+    external_links:
+      - chain
 
   # Rabbit MQ (service bus)
   rabbitmq:

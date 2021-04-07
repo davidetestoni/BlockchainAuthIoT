@@ -19,10 +19,10 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
     {
         private readonly ILogger<DataController> _logger;
         private readonly IDataRepository _repo;
-        private readonly IUserVerificationService _userVerification;
+        private readonly ITokenVerificationService _userVerification;
         private readonly IMapper _mapper;
 
-        public DataController(ILogger<DataController> logger, IDataRepository repo, IUserVerificationService userVerification)
+        public DataController(ILogger<DataController> logger, IDataRepository repo, ITokenVerificationService userVerification)
         {
             _logger = logger;
             _repo = repo;

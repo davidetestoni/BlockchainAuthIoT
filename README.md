@@ -20,7 +20,13 @@ CREATE TABLE `iot`.`Data` (
   `Data` BLOB NOT NULL,
   PRIMARY KEY (`Id`));
 ```
+Now switch into the `geth-clique-linux` folder and start the testchain
+```bash
+docker build -t geth .
+docker run --name chain --network iot -p 30303:30303 -p 8545:8545 -it -d geth
+```
 Finally run the build script
 ```bash
 ./run.bat
 ```
+Now access `http://localhost:4000` and you will see the web-based client. After deploying a contract, you can send a query to an endpoint like `http://dataprovider:3000/data/getall` in order to see the data.

@@ -30,7 +30,7 @@ namespace BlockchainAuthIoT.DataProvider
                 dbContextOptions => dbContextOptions
                     .UseMySql(
                         Configuration.GetConnectionString("MySql"),
-                        new MySqlServerVersion(Configuration.GetSection("MySql").GetValue<string>("Version")),
+                        new MySqlServerVersion(Version.Parse(Configuration.GetSection("MySql")["Version"])),
                         mySqlOptions => mySqlOptions
                             .CharSetBehavior(CharSetBehavior.NeverAppend))
                     
@@ -50,7 +50,8 @@ namespace BlockchainAuthIoT.DataProvider
             services.AddScoped<IDataRepository, DbDataRepository>();
 
             // Transient
-            services.AddTransient<IUserVerificationService, UserVerificationService>();
+            services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Configuration.GetConnectionString("Chain")));
+            services.AddTransient<ITokenVerificationService, TokenVerificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

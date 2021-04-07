@@ -1,9 +1,12 @@
 ﻿using BlockchainAuthIoT.Client.Models;
 using BlockchainAuthIoT.Client.Services;
 using BlockchainAuthIoT.Core.Models;
+using BlockchainAuthIoT.Core.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Nethereum.Signer;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace BlockchainAuthIoT.Client.Pages
@@ -19,6 +22,9 @@ namespace BlockchainAuthIoT.Client.Pages
         private OCPModel newOCP = new();
         private PolicyModel newPolicy = new();
         private ProposalModel newProposal = new();
+        private string privateKey = string.Empty;
+        private string query = string.Empty;
+        private string queryResult = string.Empty;
 
         protected override void OnInitialized()
         {
@@ -28,6 +34,7 @@ namespace BlockchainAuthIoT.Client.Pages
             }
         }
 
+        #region Contract
         private async Task DeployNewContract()
         {
             try
@@ -236,6 +243,36 @@ namespace BlockchainAuthIoT.Client.Pages
                 await AlertException(ex);
             }
         }
+        #endregion
+
+        #region Queries
+        private async Task QueryResource()
+        {
+            try
+            {
+                // Generate the token
+                var timestamp = DateTime.UtcNow.ToUnixTime();
+                var message = $"{contractAddress}|{AccountProvider.CurrentIdentity}|{timestamp}";
+                var signature = new MessageSigner().HashAndSign(message, privateKey);
+                var token = $"{message}|{signature}";
+                await Log($"Generated token: {token}");
+
+                // Perform the GET request
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Token", token);
+                using var response = await client.GetAsync(query);
+                queryResult = await response.Content.ReadAsStringAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                await AlertException(ex);
+            }
+        }
+        #endregion
+
+        private async Task Log(string message)
+            => await js.InvokeVoidAsync("console.log", message);
 
         private async Task AlertException(Exception ex)
         {

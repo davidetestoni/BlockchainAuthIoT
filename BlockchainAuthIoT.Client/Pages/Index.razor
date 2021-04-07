@@ -117,4 +117,18 @@
         <InputText @bind-Value="newProposal.ExternalResource" />
         <button class="btn-sm btn-success" @onclick="CreateProposal"><span class="oi oi-plus"></span> Create</button>
     </EditForm>
+    <hr />
 }
+
+<h5>Query resource</h5>
+<EditForm Model="query">
+    <label>Private Key:</label>
+    <InputText @bind-Value="privateKey" />
+    <br />
+    <label>Query:</label>
+    <InputText @bind-Value="query" />
+    <br />
+    <button class="btn-sm btn-success" @onclick="QueryResource"><span class="oi oi-media-play"></span> Query</button>
+</EditForm>
+<h6 class="mt-3">Result:</h6>
+<p>@queryResult</p>

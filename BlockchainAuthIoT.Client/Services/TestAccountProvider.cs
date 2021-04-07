@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Nethereum.Web3.Accounts;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace BlockchainAuthIoT.Client.Services
 {
@@ -19,6 +22,19 @@ namespace BlockchainAuthIoT.Client.Services
             }
 
             CurrentIdentity = Identities[0];
+        }
+
+        /// <summary>
+        /// Gets the account for the current identity.
+        /// </summary>
+        public Account GetAccount(string address, string keystoreDirectory)
+        {
+            if (address.StartsWith("0x"))
+                address = address[2..];
+
+            var file = Directory.EnumerateFiles(keystoreDirectory);
+            var json = File.ReadAllText(file.First(f => f.Contains(address)));
+            return Account.LoadFromKeyStore(json, "password");
         }
     }
 }

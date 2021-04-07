@@ -30,8 +30,4 @@
     </None>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)Contracts&quot; &quot;$(SolutionDir)BlockchainAuthIoT.Client\Contracts&quot; /e /y /i /r" />
-  </Target>
-
 </Project>

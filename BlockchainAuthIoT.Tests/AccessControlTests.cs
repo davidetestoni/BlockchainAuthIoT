@@ -55,6 +55,15 @@ namespace BlockchainAuthIoT.Tests
         }
 
         [Fact]
+        public async Task Deploy_Default_SignerIsCorrect()
+        {
+            var ac = await DeployContract();
+
+            var signerInContract = await ac.GetSigner();
+            Assert.Equal(signer, signerInContract);
+        }
+
+        [Fact]
         public async Task InitializeContract_FromOwner_Ok()
         {
             var ac = await DeployContract();

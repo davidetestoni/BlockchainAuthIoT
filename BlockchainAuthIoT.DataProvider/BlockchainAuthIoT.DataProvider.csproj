@@ -16,4 +16,16 @@
     <ProjectReference Include="..\BlockchainAuthIoT.Models\BlockchainAuthIoT.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Contracts\AccessControl.sol">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Contracts\bin\AccessControl.abi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Contracts\bin\AccessControl.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

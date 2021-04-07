@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0;
 
 contract AccessControl {
 
@@ -32,7 +32,7 @@ contract AccessControl {
     bool public initialized = false; // Whether the contract has been initialized
     address public owner; // The admin that created the contract
     address[] public admins; // The admins that can propose policy changes
-    address user; // The user that signed this contract
+    address public user; // The user that signed this contract
     mapping(uint => OCP) public ocps; // The on-chain policies for the user
     mapping(uint => Policy) public policies; // The off-chain policies for the user
     mapping(uint => Proposal) public proposals; // The policies proposed by the user

@@ -25,7 +25,7 @@ namespace BlockchainAuthIoT.Client
 
             // Add the providers and unlock the account (only for testing)
             // TODO: Convert this to actual production code
-            services.AddSingleton<IWeb3Provider, TestWeb3Provider>();
+            services.AddSingleton<IWeb3Provider>(_ => new TestWeb3Provider(Configuration.GetConnectionString("Chain")));
             services.AddSingleton<TestAccountProvider>();
             services.AddSingleton<AccessControlService>();
             services.AddSingleton<IHashCodeService, RemoteHashCodeService>();

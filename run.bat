@@ -11,7 +11,19 @@ cd ..
 rem Build the Data Controller and the docker image
 cd BlockchainAuthIoT.DataController
 dotnet publish -c Release
-docker build -t davidetestoni/datacontroller:latest .
+docker build -t davidetestoni/iotdatacontroller:latest .
+cd ..
+
+rem Build the Data Provider and the docker image
+cd BlockchainAuthIoT.DataProvider
+dotnet publish -c Release
+docker build -t davidetestoni/iotdataprovider:latest .
+cd ..
+
+rem Build the Client and the docker image
+cd BlockchainAuthIoT.Client
+dotnet publish -c Release
+docker build -t davidetestoni/iotclient:latest .
 cd ..
 
 rem Start compose
