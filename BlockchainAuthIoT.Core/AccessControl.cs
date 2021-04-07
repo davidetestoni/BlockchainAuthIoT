@@ -81,6 +81,12 @@ namespace BlockchainAuthIoT.Core
             => contract.GetFunction("initialized").CallAsync<bool>();
 
         /// <summary>
+        /// Gets the address of the signer of the contract.
+        /// </summary>
+        public Task<string> GetSigner()
+            => contract.GetFunction("user").CallAsync<string>();
+
+        /// <summary>
         /// Gets the list of all appointed admins.
         /// </summary>
         public async Task<string[]> GetAdmins()

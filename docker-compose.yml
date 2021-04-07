@@ -1,5 +1,6 @@
 version: "3.9"
 services:
+  # First IoT device
   device1:
     image: "davidetestoni/iotdevice:latest"
     environment:
@@ -7,6 +8,8 @@ services:
       - DEVICE_SLEEP=10000
     links:
       - rabbitmq
+      
+  # Second IoT device
   device2:
     image: "davidetestoni/iotdevice:latest"
     environment:
@@ -14,17 +17,35 @@ services:
       - DEVICE_SLEEP=8000
     links:
       - rabbitmq
+
+  # Data controller
   datacontroller:
     image: "davidetestoni/datacontroller:latest"
     links:
       - rabbitmq
     external_links:
       - mysql
+
+  # Data provider
+  dataprovider:
+    image: "davidetestoni/dataprovider:latest"
+    links:
+      - redis
+    external_links:
+      - mysql
+
+  # Rabbit MQ (service bus)
   rabbitmq:
     image: "rabbitmq:3-management"
     ports:
       - "15672:15672"
       - "5672:5672"
+
+  # Redis (cache)
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379"
 
 networks:
     default:

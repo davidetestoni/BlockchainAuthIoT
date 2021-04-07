@@ -1,5 +1,6 @@
 using System;
 using BlockchainAuthIoT.DataProvider.Repositories;
+using BlockchainAuthIoT.DataProvider.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -28,8 +29,8 @@ namespace BlockchainAuthIoT.DataProvider
             services.AddDbContextPool<AppDbContext>(
                 dbContextOptions => dbContextOptions
                     .UseMySql(
-                        Configuration.GetConnectionString("DefaultConnection"),
-                        new MySqlServerVersion(new Version(8, 0, 23)),
+                        Configuration.GetConnectionString("MySql"),
+                        new MySqlServerVersion(Configuration.GetSection("MySql").GetValue<string>("Version")),
                         mySqlOptions => mySqlOptions
                             .CharSetBehavior(CharSetBehavior.NeverAppend))
                     
@@ -38,8 +39,18 @@ namespace BlockchainAuthIoT.DataProvider
                     .EnableDetailedErrors()
             );
 
+            // Use Redis
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = Configuration.GetConnectionString("Redis");
+                options.InstanceName = "iot_";
+            });
+
             // Repositories
             services.AddScoped<IDataRepository, DbDataRepository>();
+
+            // Transient
+            services.AddTransient<IUserVerificationService, UserVerificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
