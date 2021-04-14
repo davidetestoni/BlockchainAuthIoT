@@ -3,9 +3,6 @@ pragma solidity >=0.7.0;
 
 contract AccessControl {
 
-    // NOTE: We could use json-serialized strings instead of hashes
-    // (or instead of parameters for the on-chain policies) but it's expensive
-
     // A policy that lives on-chain (more expensive but can be used as fallback
     // when remote policies cannot be retrieved for any reason)
     struct OCP {
@@ -24,18 +21,27 @@ contract AccessControl {
         string externalResource; // A link to the policy file to be reviewed
     }
 
+    // An off-chain policy
     struct Policy {
         bytes32 hashCode; // A hash of the proposal
         string externalResource; // A link to the policy file to be reviewed
     }
 
-    bool public initialized = false; // Whether the contract has been initialized
-    address public owner; // The admin that created the contract
+    // Actors involved
+    address payable public owner; // The admin that created the contract
     address[] public admins; // The admins that can propose policy changes
-    address public user; // The user that signed this contract
-    mapping(uint => OCP) public ocps; // The on-chain policies for the user
-    mapping(uint => Policy) public policies; // The off-chain policies for the user
-    mapping(uint => Proposal) public proposals; // The policies proposed by the user
+    address public signer; // The signer of this contract
+
+    // State of the contract
+    bool public initialized = false; // Whether the contract has been initialized
+    uint public price = 0; // The price to pay in order to sign the contract (once initialized)
+    uint public amountPaid = 0; // The price paid so far
+    bool public signed = false; // Whether the contract has been signed
+
+    // Policies and proposals
+    mapping(uint => OCP) public ocps; // The on-chain policies of the contract
+    mapping(uint => Policy) public policies; // The off-chain policies of the contract
+    mapping(uint => Proposal) public proposals; // The policies proposed by the signer
     
     // Used to generate incremental IDs
     uint public ocpsCount;
@@ -45,14 +51,14 @@ contract AccessControl {
     // Used for enumeration
     uint public adminsCount; 
 
-    constructor (address signer) {
+    constructor (address signerAddress) {
         // Set the creator as owner and admin
-        owner = msg.sender;
+        owner = payable(msg.sender);
         admins.push(msg.sender);
         adminsCount = 1;
 
-        // Set the user that signed the contract
-        user = signer;
+        // Set the signer
+        signer = signerAddress;
     }
 
     /*
@@ -78,8 +84,8 @@ contract AccessControl {
         _;
     }
 
-    modifier onlyUser {
-        require (msg.sender == user, "Not the user");
+    modifier onlySigner {
+        require (msg.sender == signer, "Not the signer");
         _;
     }
 
@@ -90,6 +96,16 @@ contract AccessControl {
 
     modifier onlyInitialized {
         require (initialized, "Contract not initialized");
+        _;
+    }
+
+    modifier onlyNotSigned {
+        require (!signed, "Contract already signed");
+        _;
+    }
+
+    modifier onlySigned {
+        require (signed, "Contract not signed");
         _;
     }
 
@@ -123,9 +139,10 @@ contract AccessControl {
         emit AdminRemoved(admin);
     }
 
-    function initializeContract () public onlyAdmin {
-        require (!initialized, "Contract already initialized");
+    function initializeContract (uint contractPrice) public onlyAdmin onlyNotInitialized {
+        price = contractPrice;
         initialized = true;
+        emit Initialized();
     }
 
     // Only admins are able to add off-chain and on-chain policies,
@@ -168,7 +185,7 @@ contract AccessControl {
     }
 
     // Admins can approve proposals and promote them to policies
-    function approveProposal (uint proposalId) public onlyAdmin onlyInitialized {
+    function approveProposal (uint proposalId) public onlyAdmin onlySigned {
         Proposal storage proposal = proposals[proposalId];
         require (!proposal.approved, "Proposal already approved");
         proposal.approved = true;
@@ -182,16 +199,29 @@ contract AccessControl {
     }
 
     /*
-    =======================
-    PUBLIC FUNCTIONS (USER)
-    =======================
+    =========================
+    PUBLIC FUNCTIONS (SIGNER)
+    =========================
     */
 
-    // Users are able to create proposals to request access to additional
+    // The signer can sign the contract (by sending enough money to cover the price)
+    function signContract () public onlySigner onlyInitialized onlyNotSigned payable {
+        amountPaid += msg.value;
+
+        // If the signer sent enough money, sign the contract and transfer the money to the owner
+        // TODO: Optionally refund the difference to the signer
+        if (amountPaid >= price) {
+            owner.transfer(price);
+            signed = true;
+            emit Signed();
+        }
+    }
+
+    // The signer is able to create proposals to request access to additional
     // resources (and expand the contract). An admin may then approve the
     // proposal once it's finalized
     function createProposal (bytes32 hashCode, string memory externalResource) 
-        public onlyUser onlyInitialized {
+        public onlySigner onlySigned {
             uint proposalId = proposalsCount++;
             Proposal storage newProposal = proposals[proposalId];
             newProposal.approved = false;
@@ -225,17 +255,6 @@ contract AccessControl {
     }
 
     /*
-    =================
-    PRIVATE FUNCTIONS
-    =================
-    */
-
-    function compareStrings (string memory a, string memory b) internal pure
-        returns (bool) {
-        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
-    }
-
-    /*
     ======
     EVENTS
     ======
@@ -243,6 +262,8 @@ contract AccessControl {
 
     event AdminAdded (address admin, address sender);
     event AdminRemoved (address admin);
+    event Initialized ();
+    event Signed ();
     event PolicyAdded (uint policyId);
     event ProposalApproved (uint proposalId, uint policyId);
 }

@@ -2,11 +2,13 @@
 using BlockchainAuthIoT.Core.Exceptions;
 using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.Core.Utils;
+using Nethereum.Hex.HexTypes;
 using Nethereum.Web3;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using static Nethereum.Util.UnitConversion;
 
 namespace BlockchainAuthIoT.Tests
 {
@@ -21,13 +23,13 @@ namespace BlockchainAuthIoT.Tests
             // Initialize web3 on the default port (expecting a testchain to be there)
             Web3 = new Web3();
 
-            // Get the premade accounts and unlock them
+            // Get the premade accounts and unlock them for 10 minutes
             Accounts = Web3.Eth.Accounts.SendRequestAsync().Result;
-            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[0], "password", 120).Wait();
-            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[1], "password", 120).Wait();
-            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[2], "password", 120).Wait();
-            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[3], "password", 120).Wait();
-            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[4], "password", 120).Wait();
+            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[0], "password", 10 * 60).Wait();
+            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[1], "password", 10 * 60).Wait();
+            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[2], "password", 10 * 60).Wait();
+            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[3], "password", 10 * 60).Wait();
+            Web3.Personal.UnlockAccount.SendRequestAsync(Accounts[4], "password", 10 * 60).Wait();
         }
     }
 
@@ -44,7 +46,7 @@ namespace BlockchainAuthIoT.Tests
             signer = fixture.Accounts[1];
         }
 
-        #region Deployment and Initialization
+        #region Deployment, Initialization and Signature
         [Fact]
         public async Task Deploy_Default_NotInitialized()
         {
@@ -52,6 +54,15 @@ namespace BlockchainAuthIoT.Tests
             
             var initialized = await ac.IsInitialized();
             Assert.False(initialized);
+        }
+
+        [Fact]
+        public async Task Deploy_Default_NotSigned()
+        {
+            var ac = await DeployContract();
+
+            var signed = await ac.IsSigned();
+            Assert.False(signed);
         }
 
         [Fact]
@@ -64,10 +75,10 @@ namespace BlockchainAuthIoT.Tests
         }
 
         [Fact]
-        public async Task InitializeContract_FromOwner_Ok()
+        public async Task InitializeContract_FromOwner_Initialized()
         {
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
 
             var initialized = await ac.IsInitialized();
             Assert.True(initialized);
@@ -78,7 +89,69 @@ namespace BlockchainAuthIoT.Tests
         {
             var ac = await DeployContract();
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.InitializeContract(signer));
+                async () => await ac.InitializeContract(signer, 0));
+        }
+
+        [Fact]
+        public async Task SignContract_FromSigner_EnoughFunds_Signed()
+        {
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 20);
+            await ac.SignContract(signer, 20);
+
+            var signed = await ac.IsSigned();
+            Assert.True(signed);
+        }
+
+        [Fact]
+        public async Task SignContract_FromSigner_NotEnoughFunds_NotSigned()
+        {
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 20);
+            await ac.SignContract(signer, 10);
+
+            var signed = await ac.IsSigned();
+            Assert.False(signed);
+
+            var amountPaid = await ac.GetAmountPaid();
+            Assert.Equal(10, amountPaid);
+        }
+
+        [Fact]
+        public async Task SignContract_FromSigner_TwoPayments_Signed()
+        {
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 20);
+            await ac.SignContract(signer, 10);
+            await ac.SignContract(signer, 10);
+
+            var signed = await ac.IsSigned();
+            Assert.True(signed);
+        }
+
+        [Fact]
+        public async Task SignContract_FromOwner_Throws()
+        {
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 20);
+            await Assert.ThrowsAsync<ContractException>(
+                async () => await ac.SignContract(owner, 20));
+        }
+
+        [Fact]
+        public async Task SignContract_Signed_OwnerReceivesFunds()
+        {
+            var contractPrice = Web3.Convert.ToWei(0.001, EthUnit.Ether);
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, contractPrice);
+
+            var initialBalance = await GetBalance(owner);
+
+            await ac.SignContract(signer, contractPrice);
+            var finalBalance = await GetBalance(owner);
+
+            Assert.True(finalBalance.Value - initialBalance.Value > contractPrice);
         }
         #endregion
 
@@ -157,7 +230,7 @@ namespace BlockchainAuthIoT.Tests
             var expiration = startTime.AddDays(7);
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.CreateOCP(owner, resource, startTime, expiration));
         }
@@ -248,7 +321,7 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.CreatePolicy(owner, hashCode, externalResource));
         }
@@ -277,7 +350,8 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
             var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
 
             Assert.False(proposal.Approved);
@@ -286,7 +360,7 @@ namespace BlockchainAuthIoT.Tests
         }
 
         [Fact]
-        public async Task CreateProposal_FromSignerBeforeInitialization_Throws()
+        public async Task CreateProposal_FromSignerBeforeSignature_Throws()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -294,6 +368,7 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
+            await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.CreateProposal(signer, hashCode, externalResource));
         }
@@ -307,7 +382,8 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.CreateProposal(owner, hashCode, externalResource));
         }
@@ -321,7 +397,8 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
             var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
 
             await ac.ApproveProposal(owner, proposal);
@@ -346,7 +423,8 @@ namespace BlockchainAuthIoT.Tests
             var externalResource = "test";
 
             var ac = await DeployContract();
-            await ac.InitializeContract(owner);
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
             var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
 
             await Assert.ThrowsAsync<ContractException>(
@@ -356,6 +434,9 @@ namespace BlockchainAuthIoT.Tests
 
         private Task<AccessControl> DeployContract()
             => AccessControl.Deploy(web3Fixture.Web3, owner, signer);
+
+        private Task<HexBigInteger> GetBalance(string address)
+            => web3Fixture.Web3.Eth.GetBalance.SendRequestAsync(address);
 
         private static Task<OCP> CreateDummyOCP(AccessControl ac, string from)
         {

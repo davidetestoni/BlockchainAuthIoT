@@ -8,6 +8,7 @@ using Nethereum.Web3;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace BlockchainAuthIoT.Core
@@ -37,7 +38,7 @@ namespace BlockchainAuthIoT.Core
         /// Deploys a new <see cref="AccessControl"/> contract on the blockchain.
         /// </summary>
         /// <param name="owner">The address of the account that created the contract</param>
-        /// <param name="signer">The address of the user who signed the contract</param>
+        /// <param name="signer">The address of the signer of the contract</param>
         public static async Task<AccessControl> Deploy(Web3 web3, string owner, string signer)
         {
             // Read the ABI and the bytecode from the solidity compiler output files
@@ -81,10 +82,28 @@ namespace BlockchainAuthIoT.Core
             => contract.GetFunction("initialized").CallAsync<bool>();
 
         /// <summary>
+        /// Checks if the contract has been signed.
+        /// </summary>
+        public Task<bool> IsSigned()
+            => contract.GetFunction("signed").CallAsync<bool>();
+
+        /// <summary>
+        /// Gets the price of the contract.
+        /// </summary>
+        public Task<BigInteger> GetPrice()
+            => contract.GetFunction("price").CallAsync<BigInteger>();
+
+        /// <summary>
+        /// Gets the amount that the signer paid so far.
+        /// </summary>
+        public Task<BigInteger> GetAmountPaid()
+            => contract.GetFunction("amountPaid").CallAsync<BigInteger>();
+
+        /// <summary>
         /// Gets the address of the signer of the contract.
         /// </summary>
         public Task<string> GetSigner()
-            => contract.GetFunction("user").CallAsync<string>();
+            => contract.GetFunction("signer").CallAsync<string>();
 
         /// <summary>
         /// Gets the list of all appointed admins.
@@ -141,10 +160,26 @@ namespace BlockchainAuthIoT.Core
         /// (the contract must not be initialized yet).
         /// </summary>
         /// <remarks>Only an admin can perform this</remarks>
-        public async Task InitializeContract(string from)
+        public async Task InitializeContract(string from, BigInteger price)
         {
             var transactionReceipt = await contract.GetFunction("initializeContract")
-                .SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null);
+                .SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null, price);
+
+            if (!transactionReceipt.Succeeded())
+            {
+                throw new ContractException(transactionReceipt.Logs);
+            }
+        }
+
+        /// <summary>
+        /// Signs the contract by sending the amount required. After being signed, the policies defined
+        /// in the contract are in effect and can be used to provide access control capabilities.
+        /// </summary>
+        /// <remarks>Only the signer can perform this</remarks>
+        public async Task SignContract(string from, BigInteger amount)
+        {
+            var transactionReceipt = await contract.GetFunction("signContract")
+                .SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(amount), null);
 
             if (!transactionReceipt.Succeeded())
             {
@@ -177,6 +212,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// Creates an on-chain policy to access a specific <paramref name="resource"/> with a given <paramref name="expiration"/>.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task<OCP> CreateOCP(string from, string resource, DateTime startTime, DateTime expiration)
         {
             var createFunction = contract.GetFunction("createOCP");
@@ -202,6 +238,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// Sets a boolean parameter for the given on-chain policy.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task SetOCPBoolParam(string from, OCP ocp, string name, bool value)
         {
             var setFunction = contract.GetFunction("setOCPBoolParam");
@@ -217,6 +254,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// Sets an integer parameter for the given on-chain policy.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task SetOCPIntParam(string from, OCP ocp, string name, int value)
         {
             var setFunction = contract.GetFunction("setOCPIntParam");
@@ -232,6 +270,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// Sets a string parameter for the given on-chain policy.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task SetOCPStringParam(string from, OCP ocp, string name, string value)
         {
             var setFunction = contract.GetFunction("setOCPStringParam");
@@ -288,6 +327,7 @@ namespace BlockchainAuthIoT.Core
         /// Creates a new policy given a <paramref name="hashCode"/> for validation and an
         /// <paramref name="externalResource"/> where the body of the policy can be found.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task<Policy> CreatePolicy(string from, byte[] hashCode, string externalResource)
         {
             if (hashCode.Length != 32)
@@ -339,6 +379,7 @@ namespace BlockchainAuthIoT.Core
         /// Creates a new proposal given a <paramref name="hashCode"/> for validation and an
         /// <paramref name="externalResource"/> where the body of the proposal can be found.
         /// </summary>
+        /// <remarks>Only the signer can perform this</remarks>
         public async Task<Proposal> CreateProposal(string from, byte[] hashCode, string externalResource)
         {
             var createFunction = contract.GetFunction("createProposal");
@@ -364,6 +405,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// Approves a given proposal and turns it into a policy.
         /// </summary>
+        /// <remarks>Only an admin can perform this</remarks>
         public async Task ApproveProposal(string from, Proposal proposal)
         {
             var approveFunction = contract.GetFunction("approveProposal");
