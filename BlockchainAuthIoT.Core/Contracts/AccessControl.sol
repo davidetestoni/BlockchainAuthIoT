@@ -7,24 +7,26 @@ contract AccessControl {
     // when remote policies cannot be retrieved for any reason)
     struct OCP {
         string resource; // The name of the remote endpoint or resource
-        uint256 startTime; // When this policy becomes valid
-        uint256 expiration; // When this policy should be voided (unix epoch)
+        uint startTime; // When this policy becomes valid
+        uint expiration; // When this policy should be voided (unix epoch)
         mapping (string => bool) boolParams; // e.g. "subresourceAccess" => true
         mapping (string => int) intParams; // e.g. "querySize" => 10
         mapping (string => string) stringParams; // e.g. "environment" => "test"
     }
 
-    // A policy proposal
+    // An off-chain policy proposal
     struct Proposal {
-        bool approved; // Whether the proposal has been approved
-        bytes32 hashCode; // The hash of the proposal for verification
-        string externalResource; // A link to the policy file to be reviewed
+        bool accepted; // Whether the proposal has been accepted
+        uint price; // The amount required to accept the proposal
+        uint amountPaid; // The amount paid so far
+        bytes32 hashCode; // The hash of the content of the proposal (for verification)
+        string externalResource; // A link to the file containing the proposal
     }
 
     // An off-chain policy
     struct Policy {
-        bytes32 hashCode; // A hash of the proposal
-        string externalResource; // A link to the policy file to be reviewed
+        bytes32 hashCode; // The hash of the content of the policy (for verification)
+        string externalResource; // A link to the file containing the policy
     }
 
     // Actors involved
@@ -35,13 +37,13 @@ contract AccessControl {
     // State of the contract
     bool public initialized = false; // Whether the contract has been initialized
     uint public price = 0; // The price to pay in order to sign the contract (once initialized)
-    uint public amountPaid = 0; // The price paid so far
+    uint public amountPaid = 0; // The amount paid so far
     bool public signed = false; // Whether the contract has been signed
 
     // Policies and proposals
     mapping(uint => OCP) public ocps; // The on-chain policies of the contract
     mapping(uint => Policy) public policies; // The off-chain policies of the contract
-    mapping(uint => Proposal) public proposals; // The policies proposed by the signer
+    mapping(uint => Proposal) public proposals; // The policies proposed by admins
     
     // Used to generate incremental IDs
     uint public ocpsCount;
@@ -115,12 +117,14 @@ contract AccessControl {
     ===================================
     */
 
+    // Admins can add other admins
     function addAdmin (address newAdmin) public onlyAdmin {
         admins.push(newAdmin);
         adminsCount++;
         emit AdminAdded(newAdmin, msg.sender);
     }
 
+    // The owner can remove admins
     function removeAdmin (address admin) public onlyOwner {
         require (admin != owner, "Cannot remove the owner");
         bool isAdmin = false;
@@ -139,22 +143,20 @@ contract AccessControl {
         emit AdminRemoved(admin);
     }
 
-    function initializeContract (uint contractPrice) public onlyAdmin onlyNotInitialized {
-        price = contractPrice;
-        initialized = true;
-        emit Initialized();
-    }
-
-    // Only admins are able to add off-chain and on-chain policies,
-    // when the contract is not yet initialized
+    // Admins are able to add off-chain and on-chain policies, as long as
+    // the contract is not yet initialized
     function createPolicy (bytes32 hashCode, string memory externalResource) 
         public onlyAdmin onlyNotInitialized {
             uint policyId = policiesCount++;
             Policy storage newPolicy = policies[policyId];
             newPolicy.hashCode = hashCode;
             newPolicy.externalResource = externalResource;
+
+            emit PolicyAdded(policyId);
     }
 
+    // Admins are able to add on-chain policies and set their parameters, as long as
+    // the contract is not yet initialized
     function createOCP (string memory resource, uint256 startTime, uint256 expiration)
         public onlyAdmin onlyNotInitialized {
             uint ocpId = ocpsCount++;
@@ -163,7 +165,7 @@ contract AccessControl {
             ocp.startTime = startTime;
             ocp.expiration = expiration;
 
-            emit PolicyAdded(ocpId);
+            emit OCPAdded(ocpId);
     }
 
     function setOCPBoolParam (uint ocpId, string memory name, bool value)
@@ -184,18 +186,30 @@ contract AccessControl {
             ocp.stringParams[name] = value;
     }
 
-    // Admins can approve proposals and promote them to policies
-    function approveProposal (uint proposalId) public onlyAdmin onlySigned {
-        Proposal storage proposal = proposals[proposalId];
-        require (!proposal.approved, "Proposal already approved");
-        proposal.approved = true;
+    // Admins can initialize the contract. Once initialized, no more policies
+    // (off-chain or on-chain) can be created, but proposals will be available
+    // as a way to add new policies to the contract.
+    function initializeContract (uint contractPrice) public onlyAdmin onlyNotInitialized {
+        price = contractPrice;
+        initialized = true;
 
-        uint policyId = policiesCount++;
-        Policy storage policy = policies[policyId];
-        policy.hashCode = proposal.hashCode;
-        policy.externalResource = proposal.externalResource;
+        emit Initialized();
+    }
 
-        emit ProposalApproved(proposalId, policyId);
+    // Admins are able to create proposals to grant access to additional
+    // resources (and expand the contract). The signer may then approve the
+    // proposal and promote it to a policy by paying the required price
+    function createProposal (uint proposalPrice, bytes32 hashCode, string memory externalResource) 
+        public onlyAdmin onlySigned {
+            uint proposalId = proposalsCount++;
+            Proposal storage newProposal = proposals[proposalId];
+            newProposal.accepted = false;
+            newProposal.price = proposalPrice;
+            newProposal.amountPaid = 0;
+            newProposal.hashCode = hashCode;
+            newProposal.externalResource = externalResource;
+
+            emit ProposalCreated(proposalId);
     }
 
     /*
@@ -213,20 +227,32 @@ contract AccessControl {
         if (amountPaid >= price) {
             owner.transfer(price);
             signed = true;
+
             emit Signed();
         }
     }
 
-    // The signer is able to create proposals to request access to additional
-    // resources (and expand the contract). An admin may then approve the
-    // proposal once it's finalized
-    function createProposal (bytes32 hashCode, string memory externalResource) 
-        public onlySigner onlySigned {
-            uint proposalId = proposalsCount++;
-            Proposal storage newProposal = proposals[proposalId];
-            newProposal.approved = false;
-            newProposal.hashCode = hashCode;
-            newProposal.externalResource = externalResource;
+    // The signer can accept proposals (by sending enough money to cover the price)
+    function acceptProposal (uint proposalId) public onlySigner onlySigned payable {
+        Proposal storage proposal = proposals[proposalId];
+        require (!proposal.accepted, "Proposal already accepted");
+        proposal.amountPaid += msg.value;
+
+        // If the signer sent enough money, approve the proposal, transfer the money to the owner
+        // and promote the proposal to a policy
+        // TODO: Optionally refund the difference to the signer
+        if (proposal.amountPaid >= proposal.price) {
+            proposal.accepted = true;
+            owner.transfer(proposal.price);
+
+            // Create the new policy
+            uint policyId = policiesCount++;
+            Policy storage policy = policies[policyId];
+            policy.hashCode = proposal.hashCode;
+            policy.externalResource = proposal.externalResource;
+
+            emit ProposalAccepted(proposalId, policyId);
+        }
     }
 
     /*
@@ -264,6 +290,8 @@ contract AccessControl {
     event AdminRemoved (address admin);
     event Initialized ();
     event Signed ();
+    event OCPAdded (uint ocpId);
     event PolicyAdded (uint policyId);
-    event ProposalApproved (uint proposalId, uint policyId);
+    event ProposalCreated (uint proposalId);
+    event ProposalAccepted (uint proposalId, uint policyId);
 }

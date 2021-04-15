@@ -1,4 +1,5 @@
 ﻿using Nethereum.ABI.FunctionEncoding.Attributes;
+using System.Numerics;
 
 namespace BlockchainAuthIoT.Core.Models
 {
@@ -8,12 +9,18 @@ namespace BlockchainAuthIoT.Core.Models
         public uint Id { get; set; } = 0;
 
         [Parameter("bool", 1)]
-        public bool Approved { get; set; }
+        public bool Accepted { get; set; }
 
-        [Parameter("bytes32", 2)]
+        [Parameter("uint", 2)]
+        public BigInteger Price { get; set; }
+
+        [Parameter("uint", 3)]
+        public BigInteger AmountPaid { get; set; }
+
+        [Parameter("bytes32", 4)]
         public byte[] HashCode { get; set; }
 
-        [Parameter("string", 3)]
+        [Parameter("string", 5)]
         public string ExternalResource { get; set; }
     }
 }

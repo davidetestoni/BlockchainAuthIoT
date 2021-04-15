@@ -342,7 +342,7 @@ namespace BlockchainAuthIoT.Tests
 
         #region Proposal Management
         [Fact]
-        public async Task CreateProposal_FromSigner_Ok()
+        public async Task CreateProposal_FromAdmin_Ok()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -352,15 +352,15 @@ namespace BlockchainAuthIoT.Tests
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 0, hashCode, externalResource);
 
-            Assert.False(proposal.Approved);
+            Assert.False(proposal.Accepted);
             Assert.True(hashCode.SequenceEqual(proposal.HashCode));
             Assert.Equal(externalResource, proposal.ExternalResource);
         }
 
         [Fact]
-        public async Task CreateProposal_FromSignerBeforeSignature_Throws()
+        public async Task CreateProposal_FromAdminBeforeSignature_Throws()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -370,11 +370,11 @@ namespace BlockchainAuthIoT.Tests
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreateProposal(signer, hashCode, externalResource));
+                async () => await ac.CreateProposal(owner, 0, hashCode, externalResource));
         }
 
         [Fact]
-        public async Task CreateProposal_FromAdmin_Throws()
+        public async Task CreateProposal_FromSigner_Throws()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -385,11 +385,11 @@ namespace BlockchainAuthIoT.Tests
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreateProposal(owner, hashCode, externalResource));
+                async () => await ac.CreateProposal(signer, 0, hashCode, externalResource));
         }
 
         [Fact]
-        public async Task ApproveProposal_FromAdmin_Ok()
+        public async Task AcceptProposal_FromSigner_EnoughFunds_Accepted()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -399,13 +399,13 @@ namespace BlockchainAuthIoT.Tests
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
 
-            await ac.ApproveProposal(owner, proposal);
+            await ac.AcceptProposal(signer, proposal, 20);
             var proposals = await ac.GetProposals();
-            var approvedProposal = proposals.Last();
+            var acceptedProposal = proposals.Last();
 
-            Assert.True(approvedProposal.Approved);
+            Assert.True(acceptedProposal.Accepted);
 
             var policies = await ac.GetPolicies();
             var newPolicy = policies.Last();
@@ -415,7 +415,7 @@ namespace BlockchainAuthIoT.Tests
         }
 
         [Fact]
-        public async Task ApproveProposal_FromSigner_Throws()
+        public async Task AcceptProposal_FromSigner_NotEnoughFunds_NotAccepted()
         {
             var random = new Random();
             var hashCode = new byte[32];
@@ -425,10 +425,74 @@ namespace BlockchainAuthIoT.Tests
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(signer, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
+
+            await ac.AcceptProposal(signer, proposal, 10);
+            var proposals = await ac.GetProposals();
+            var acceptedProposal = proposals.Last();
+
+            Assert.False(acceptedProposal.Accepted);
+        }
+
+        [Fact]
+        public async Task AcceptProposal_FromSigner_TwoPayments_Accepted()
+        {
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
+
+            await ac.AcceptProposal(signer, proposal, 10);
+            await ac.AcceptProposal(signer, proposal, 10);
+            var proposals = await ac.GetProposals();
+            var acceptedProposal = proposals.Last();
+
+            Assert.True(acceptedProposal.Accepted);
+        }
+
+        [Fact]
+        public async Task AcceptProposal_Accepted_OwnerReceivesFunds()
+        {
+            var proposalPrice = Web3.Convert.ToWei(0.0003, EthUnit.Ether);
+
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
+            var proposal = await ac.CreateProposal(owner, proposalPrice, hashCode, externalResource);
+
+            var initialBalance = await GetBalance(owner);
+
+            await ac.AcceptProposal(signer, proposal, proposalPrice);
+            var finalBalance = await GetBalance(owner);
+
+            Assert.True(finalBalance.Value - initialBalance.Value > proposalPrice);
+        }
+
+        [Fact]
+        public async Task AcceptProposal_FromAdmin_Throws()
+        {
+            var random = new Random();
+            var hashCode = new byte[32];
+            random.NextBytes(hashCode);
+            var externalResource = "test";
+
+            var ac = await DeployContract();
+            await ac.InitializeContract(owner, 0);
+            await ac.SignContract(signer, 0);
+            var proposal = await ac.CreateProposal(owner, 0, hashCode, externalResource);
 
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.ApproveProposal(signer, proposal));
+                async () => await ac.AcceptProposal(owner, proposal, 0));
         }
         #endregion
 

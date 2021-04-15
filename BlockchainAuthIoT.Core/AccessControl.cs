@@ -172,7 +172,7 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
-        /// Signs the contract by sending the amount required. After being signed, the policies defined
+        /// Signs the contract by sending the <paramref name="amount"/> required. After being signed, the policies defined
         /// in the contract are in effect and can be used to provide access control capabilities.
         /// </summary>
         /// <remarks>Only the signer can perform this</remarks>
@@ -379,19 +379,19 @@ namespace BlockchainAuthIoT.Core
         /// Creates a new proposal given a <paramref name="hashCode"/> for validation and an
         /// <paramref name="externalResource"/> where the body of the proposal can be found.
         /// </summary>
-        /// <remarks>Only the signer can perform this</remarks>
-        public async Task<Proposal> CreateProposal(string from, byte[] hashCode, string externalResource)
+        /// <remarks>Only an admin can perform this</remarks>
+        public async Task<Proposal> CreateProposal(string from, BigInteger price, byte[] hashCode, string externalResource)
         {
             var createFunction = contract.GetFunction("createProposal");
             var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                hashCode, externalResource);
+                price, hashCode, externalResource);
 
             if (!transactionReceipt.Succeeded())
             {
                 throw new ContractException(transactionReceipt.Logs);
             }
 
-            // This is the ID of the next policy so we need to subtract 1
+            // This is the ID of the next proposal so we need to subtract 1
             var proposalsCount = await contract.GetFunction("proposalsCount").CallAsync<uint>();
             var proposalId = proposalsCount - 1;
 
@@ -403,13 +403,13 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
-        /// Approves a given proposal and turns it into a policy.
+        /// Accepts a given proposal by paying the required amount and turns it into a policy.
         /// </summary>
-        /// <remarks>Only an admin can perform this</remarks>
-        public async Task ApproveProposal(string from, Proposal proposal)
+        /// <remarks>Only the signer can perform this</remarks>
+        public async Task AcceptProposal(string from, Proposal proposal, BigInteger amount)
         {
-            var approveFunction = contract.GetFunction("approveProposal");
-            var transactionReceipt = await approveFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
+            var acceptFunction = contract.GetFunction("acceptProposal");
+            var transactionReceipt = await acceptFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(amount), null,
                 proposal.Id);
 
             if (!transactionReceipt.Succeeded())
