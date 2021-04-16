@@ -1,13 +1,17 @@
 ﻿using BlockchainAuthIoT.Client.Models;
 using BlockchainAuthIoT.Client.Services;
+using BlockchainAuthIoT.Core.Extensions;
 using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.Core.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Nethereum.Signer;
+using Nethereum.Util;
 using System;
 using System.Net.Http;
+using System.Numerics;
 using System.Threading.Tasks;
+using static Nethereum.Util.UnitConversion;
 
 namespace BlockchainAuthIoT.Client.Pages
 {
@@ -18,6 +22,7 @@ namespace BlockchainAuthIoT.Client.Pages
 
         private string contractAddress = string.Empty;
         private string signerAddress = string.Empty;
+        private decimal contractPriceEth = 0;
         private string newAdmin = string.Empty;
         private OCPModel newOCP = new();
         private PolicyModel newPolicy = new();
@@ -32,6 +37,12 @@ namespace BlockchainAuthIoT.Client.Pages
             {
                 contractAddress = AccessControl.ContractAddress;
             }
+        }
+
+        private async Task RefreshBalance()
+        {
+            await AccountProvider.RefreshBalance();
+            await InvokeAsync(StateHasChanged);
         }
 
         #region Contract
@@ -93,12 +104,28 @@ namespace BlockchainAuthIoT.Client.Pages
         {
             try
             {
-                await AccessControl.InitializeContract();
+                await AccessControl.InitializeContract(contractPriceEth);
                 await AlertSuccess("Contract initialized");
             }
             catch (Exception ex)
             {
                 await AlertException(ex);
+            }
+        }
+
+        private async Task SignContract()
+        {
+            if (await Confirm($"You are about to send {AccessControl.Price.ToEth()} ETH to sign the contract. Is it ok?"))
+            {
+                try
+                {
+                    await AccessControl.SignContract();
+                    await AlertSuccess("Contract signed");
+                }
+                catch (Exception ex)
+                {
+                    await AlertException(ex);
+                }
             }
         }
 
@@ -231,16 +258,19 @@ namespace BlockchainAuthIoT.Client.Pages
             }
         }
 
-        private async Task ApproveProposal(Proposal proposal)
+        private async Task AcceptProposal(Proposal proposal)
         {
-            try
+            if (await Confirm($"You are about to send {proposal.Price.ToEth()} ETH to accept the proposal. Is it ok?"))
             {
-                await AccessControl.ApproveProposal(proposal);
-                await AlertSuccess("Proposal approved");
-            }
-            catch (Exception ex)
-            {
-                await AlertException(ex);
+                try
+                {
+                    await AccessControl.AcceptProposal(proposal);
+                    await AlertSuccess("Proposal accepted");
+                }
+                catch (Exception ex)
+                {
+                    await AlertException(ex);
+                }
             }
         }
         #endregion
@@ -274,6 +304,9 @@ namespace BlockchainAuthIoT.Client.Pages
         private async Task Log(string message)
             => await js.InvokeVoidAsync("console.log", message);
 
+        private async Task<bool> Confirm(string message)
+            => await js.InvokeAsync<bool>("confirm", message);
+
         private async Task AlertException(Exception ex)
         {
             await js.InvokeVoidAsync("console.log", ex.ToString());
@@ -288,5 +321,8 @@ namespace BlockchainAuthIoT.Client.Pages
 
         private ValueTask<string> GetPrompt(string message) =>
             js.InvokeAsync<string>("prompt", message);
+
+        private static decimal ToEth(BigInteger wei)
+            => UnitConversion.Convert.FromWei(wei, EthUnit.Ether);
     }
 }

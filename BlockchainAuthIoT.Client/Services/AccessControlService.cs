@@ -1,10 +1,13 @@
 ﻿using BlockchainAuthIoT.Client.Models;
 using BlockchainAuthIoT.Core;
 using BlockchainAuthIoT.Core.Models;
+using Nethereum.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
+using static Nethereum.Util.UnitConversion;
 
 namespace BlockchainAuthIoT.Client.Services
 {
@@ -17,6 +20,9 @@ namespace BlockchainAuthIoT.Client.Services
         private AccessControl contract;
 
         private bool initialized = false;
+        private bool signed = false;
+        private BigInteger price = 0;
+        private BigInteger amountPaid = 0;
         private List<string> admins = new();
         private List<OCP> ocps = new();
         private List<Policy> policies = new();
@@ -29,6 +35,9 @@ namespace BlockchainAuthIoT.Client.Services
         public IEnumerable<Policy> Policies => policies;
         public IEnumerable<Proposal> Proposals => proposals;
         public bool Initialized => initialized;
+        public bool Signed => signed;
+        public BigInteger Price => price;
+        public BigInteger AmountPaid => amountPaid;
 
         public AccessControlService(IWeb3Provider web3Provider, TestAccountProvider accountProvider,
             IHashCodeService hashCodeService)
@@ -50,6 +59,9 @@ namespace BlockchainAuthIoT.Client.Services
             ContractLoaded = true;
 
             initialized = await contract.IsInitialized();
+            signed = await contract.IsSigned();
+            price = await contract.GetPrice();
+            amountPaid = await contract.GetAmountPaid();
             await RefreshAdmins();
             await RefreshOCPs();
             await RefreshPolicies();
@@ -71,11 +83,21 @@ namespace BlockchainAuthIoT.Client.Services
             await RefreshAdmins();
         }
 
-        public async Task InitializeContract()
+        public async Task InitializeContract(decimal priceInEth)
         {
             EnsureLoaded();
-            await contract.InitializeContract(accountProvider.CurrentIdentity);
+            var wei = UnitConversion.Convert.ToWei(priceInEth, EthUnit.Ether);
+            await contract.InitializeContract(accountProvider.CurrentIdentity, wei);
             initialized = await contract.IsInitialized();
+            price = await contract.GetPrice();
+        }
+
+        public async Task SignContract()
+        {
+            EnsureLoaded();
+            await contract.SignContract(accountProvider.CurrentIdentity, price);
+            signed = await contract.IsSigned();
+            amountPaid = await contract.GetAmountPaid();
         }
         #endregion
 
@@ -139,14 +161,15 @@ namespace BlockchainAuthIoT.Client.Services
         {
             EnsureLoaded();
             var hashCode = await hashCodeService.ComputeHashCode(model.ExternalResource);
-            await contract.CreateProposal(accountProvider.CurrentIdentity, hashCode, model.ExternalResource);
+            var wei = UnitConversion.Convert.ToWei(model.Price, EthUnit.Ether);
+            await contract.CreateProposal(accountProvider.CurrentIdentity, wei, hashCode, model.ExternalResource);
             await RefreshProposals();
         }
 
-        public async Task ApproveProposal(Proposal proposal)
+        public async Task AcceptProposal(Proposal proposal)
         {
             EnsureLoaded();
-            await contract.ApproveProposal(accountProvider.CurrentIdentity, proposal);
+            await contract.AcceptProposal(accountProvider.CurrentIdentity, proposal, proposal.Price);
             await RefreshProposals();
             await RefreshPolicies();
         }

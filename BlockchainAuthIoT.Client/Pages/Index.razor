@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using BlockchainAuthIoT.Core.Extensions 
 
 <h5>Identity</h5>
 <EditForm Model="AccountProvider.CurrentIdentity">
@@ -10,6 +11,8 @@
         }
     </InputSelect>
 </EditForm>
+<span><b>Balance:</b> @AccountProvider.CurrentBalance.ToEth() ETH</span>
+<button class="btn-sm btn-success" @onclick="RefreshBalance">Refresh Balance</button>
 <hr />
 
 <h5>Contract Loading / Deployment</h5>
@@ -30,7 +33,23 @@
 {
     <h5>Contract Management</h5>
     <span><b>Initialized:</b> @AccessControl.Initialized</span>
-    <button class="btn-sm btn-success" @onclick="InitializeContract">Initialize Contract</button>
+    @if (!AccessControl.Initialized)
+    {
+        <button class="btn-sm btn-success ml-3" @onclick="InitializeContract">Initialize Contract</button>
+        <br />
+        <span>Price (ETH):</span>
+        <EditForm Model="this">
+            <InputNumber @bind-Value="contractPriceEth" />
+        </EditForm>
+    }
+    <br />
+    <span><b>Signed:</b> @AccessControl.Signed</span>
+    @if (!AccessControl.Signed)
+    {
+        <button class="btn-sm btn-success ml-3" @onclick="SignContract">Sign Contract</button>
+    }
+    <br />
+    <span><b>Price:</b> @AccessControl.Price.ToEth() (@AccessControl.AmountPaid.ToEth() paid)</span>
     <br />
     <hr />
 
@@ -105,8 +124,11 @@
         {
             <li>
                 <b>External resource:</b> @proposal.ExternalResource | <b>Hash code:</b> @Convert.ToBase64String(proposal.HashCode)
-                | <b>Approved:</b> @proposal.Approved
-                <button class="btn-sm btn-success" @onclick="(async () => await ApproveProposal(proposal))">Approve</button>
+                | <b>Price:</b> @proposal.Price.ToEth() (@proposal.AmountPaid.ToEth() paid) | <b>Accepted:</b> @proposal.Accepted
+                @if (!proposal.Accepted)
+                {
+                    <button class="btn-sm btn-success" @onclick="(async () => await AcceptProposal(proposal))">Accept</button>
+                }
             </li>
         }
     </ul>
@@ -115,6 +137,8 @@
         <h6>Create new</h6>
         <label>External resource:</label>
         <InputText @bind-Value="newProposal.ExternalResource" />
+        <label>Price (ETH):</label>
+        <InputNumber @bind-Value="newProposal.Price" />
         <button class="btn-sm btn-success" @onclick="CreateProposal"><span class="oi oi-plus"></span> Create</button>
     </EditForm>
     <hr />

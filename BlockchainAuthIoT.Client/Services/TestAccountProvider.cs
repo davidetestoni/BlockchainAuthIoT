@@ -1,14 +1,22 @@
-﻿using Nethereum.Web3.Accounts;
+﻿using Nethereum.Util;
+using Nethereum.Web3.Accounts;
 using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
+using static Nethereum.Util.UnitConversion;
 
 namespace BlockchainAuthIoT.Client.Services
 {
     public class TestAccountProvider
     {
+        private readonly IWeb3Provider web3Provider;
+
         public string[] Identities { get; init; }
         public string CurrentIdentity { get; set; }
+        public BigInteger CurrentBalance { get; set; }
+        public decimal CurrentBalanceEth => UnitConversion.Convert.FromWei(CurrentBalance, EthUnit.Ether);
 
         public TestAccountProvider(IWeb3Provider web3Provider)
         {
@@ -22,6 +30,7 @@ namespace BlockchainAuthIoT.Client.Services
             }
 
             CurrentIdentity = Identities[0];
+            this.web3Provider = web3Provider;
         }
 
         /// <summary>
@@ -35,6 +44,14 @@ namespace BlockchainAuthIoT.Client.Services
             var file = Directory.EnumerateFiles(keystoreDirectory);
             var json = File.ReadAllText(file.First(f => f.Contains(address)));
             return Account.LoadFromKeyStore(json, "password");
+        }
+
+        /// <summary>
+        /// Refreshes the value of <see cref="CurrentBalance"/>.
+        /// </summary>
+        public async Task RefreshBalance()
+        {
+            CurrentBalance = await web3Provider.Web3.Eth.GetBalance.SendRequestAsync(CurrentIdentity);
         }
     }
 }
