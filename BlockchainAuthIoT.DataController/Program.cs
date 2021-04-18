@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 
@@ -11,8 +12,6 @@ namespace BlockchainAuthIoT.DataController
 {
     static class Program
     {
-        static readonly string queueName = "iot";
-
         static void Main(string[] args)
         {
             var db = new MySqlConnection("server=mysql;user=root;password=admin;database=iot");
@@ -54,33 +53,60 @@ namespace BlockchainAuthIoT.DataController
 
             var channel = connection.CreateModel();
 
-            channel.QueueDeclare(queueName,
+            // TEMPERATURE
+            channel.QueueDeclare("temperature",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
 
-            var consumer = new EventingBasicConsumer(channel);
-            consumer.Received += (sender, e) =>
+            var temperatureConsumer = new EventingBasicConsumer(channel);
+            temperatureConsumer.Received += (sender, e) =>
             {
                 var body = e.Body.ToArray();
                 var json = Encoding.UTF8.GetString(body);
-                Console.WriteLine(json);
+                Console.WriteLine($"Consumed message: {json}");
 
-                var msg = JsonConvert.DeserializeObject<SampleData>(json);
+                var msg = JsonConvert.DeserializeObject<TemperatureReading>(json);
                 var date = msg.Date.ToString("yyyy-MM-dd HH:mm:ss");
-                var data = Encoding.UTF8.GetString(msg.Data).Replace("'", "''");
-                var name = msg.Name.Replace("'", "''");
+                var value = msg.Value;
                 var device = msg.Device.Replace("'", "''");
-                var query = $"INSERT INTO `iot`.`Data` (`Date`, `Name`, `Device`, `Data`) VALUES ('{date}', '{name}', '{device}', '{data}');";
+                var query = $"INSERT INTO `iot`.`Temperature` (`Date`, `Device`, `Value`) VALUES ('{date}', '{device}', {value.ToString(CultureInfo.InvariantCulture)});";
 
                 Console.WriteLine($"Executing query: {query}");
                 using var command = new MySqlCommand(query, db);
                 command.ExecuteNonQuery();
             };
 
-            channel.BasicConsume(queueName, true, consumer);
-            
+            channel.BasicConsume("temperature", true, temperatureConsumer);
+
+            // HUMIDITY
+            channel.QueueDeclare("humidity",
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            var humidityConsumer = new EventingBasicConsumer(channel);
+            humidityConsumer.Received += (sender, e) =>
+            {
+                var body = e.Body.ToArray();
+                var json = Encoding.UTF8.GetString(body);
+                Console.WriteLine($"Consumed message: {json}");
+
+                var msg = JsonConvert.DeserializeObject<HumidityReading>(json);
+                var date = msg.Date.ToString("yyyy-MM-dd HH:mm:ss");
+                var value = msg.Value;
+                var device = msg.Device.Replace("'", "''");
+                var query = $"INSERT INTO `iot`.`Humidity` (`Date`, `Device`, `Value`) VALUES ('{date}', '{device}', {value.ToString(CultureInfo.InvariantCulture)});";
+
+                Console.WriteLine($"Executing query: {query}");
+                using var command = new MySqlCommand(query, db);
+                command.ExecuteNonQuery();
+            };
+
+            channel.BasicConsume("humidity", true, humidityConsumer);
+
             while (true)
             {
 

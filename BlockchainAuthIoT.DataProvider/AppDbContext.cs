@@ -11,6 +11,7 @@ namespace BlockchainAuthIoT.DataProvider
 
         }
 
-        public DbSet<DataEntity> Data { get; set; }
+        public DbSet<TemperatureEntity> Temperature { get; set; }
+        public DbSet<HumidityEntity> Humidity { get; set; }
     }
 }

@@ -9,7 +9,6 @@ namespace BlockchainAuthIoT.Device
 {
     static class Program
     {
-        private static readonly string queueName = "iot";
         private static readonly Random rand = new();
 
         static void Main(string[] args)
@@ -45,7 +44,7 @@ namespace BlockchainAuthIoT.Device
 
             var channel = connection.CreateModel();
 
-            channel.QueueDeclare(queueName,
+            channel.QueueDeclare("temperature",
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -53,24 +52,40 @@ namespace BlockchainAuthIoT.Device
 
             while (true)
             {
-                var temperature = rand.Next(20, 30);
+                var temperature = RandomDouble(rand, 20, 30);
 
-                var message = new SampleData
+                Reading message = new TemperatureReading
                 {
                     Date = DateTime.Now,
-                    Name = "Temperature",
                     Device = DEVICE_NAME,
-                    Data = Encoding.UTF8.GetBytes(temperature.ToString())
+                    Value = temperature
                 };
 
                 var json = JsonConvert.SerializeObject(message);
                 var body = Encoding.UTF8.GetBytes(json);
 
-                channel.BasicPublish("", queueName, null, body);
-                Console.WriteLine($"Published {json}");
+                channel.BasicPublish("", "temperature", null, body);
+
+                var humidity = RandomDouble(rand, 50, 60);
+
+                message = new HumidityReading
+                {
+                    Date = DateTime.Now,
+                    Device = DEVICE_NAME,
+                    Value = humidity
+                };
+
+                json = JsonConvert.SerializeObject(message);
+                body = Encoding.UTF8.GetBytes(json);
+
+                channel.BasicPublish("", "humidity", null, body);
+                Console.WriteLine($"Published temperature ({temperature} °C) and humidity ({humidity}%)");
 
                 Thread.Sleep(sleepTime);
             }
         }
+
+        private static double RandomDouble(Random random, double minimum, double maximum)
+            => random.NextDouble() * (maximum - minimum) + minimum;
     }
 }

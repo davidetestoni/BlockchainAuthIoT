@@ -10,14 +10,22 @@ Then start the `mysql` container
 ```bash
 docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin -d mysql:latest
 ```
-Now connect to the database (e.g. using MySQL Workbench) and create a schema called `iot` (with default settings). Then execute this query to create the table
+Now connect to the database (e.g. using MySQL Workbench) and execute this query to recreate the schema for the test environment
 ```sql
-CREATE TABLE `iot`.`Data` (
+CREATE SCHEMA `iot`;
+
+CREATE TABLE `iot`.`Temperature` (
   `Id` INT NOT NULL AUTO_INCREMENT,
   `Date` DATETIME NOT NULL,
-  `Name` VARCHAR(45) NOT NULL,
   `Device` VARCHAR(45) NOT NULL,
-  `Data` BLOB NOT NULL,
+  `Value` DOUBLE NOT NULL,
+  PRIMARY KEY (`Id`));
+
+CREATE TABLE `iot`.`Humidity` (
+  `Id` INT NOT NULL AUTO_INCREMENT,
+  `Date` DATETIME NOT NULL,
+  `Device` VARCHAR(45) NOT NULL,
+  `Value` DOUBLE NOT NULL,
   PRIMARY KEY (`Id`));
 ```
 Now switch into the `geth-clique-linux` folder and start the testchain

@@ -47,7 +47,8 @@ namespace BlockchainAuthIoT.DataProvider
             });
 
             // Repositories
-            services.AddScoped<IDataRepository, DbDataRepository>();
+            services.AddScoped<ITemperatureRepository, DbTemperatureRepository>();
+            services.AddScoped<IHumidityRepository, DbHumidityRepository>();
 
             // Transient
             services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Configuration.GetConnectionString("Chain")));
