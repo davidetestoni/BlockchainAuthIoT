@@ -303,13 +303,15 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
-            var policy = await ac.CreatePolicy(owner, hashCode, externalResource);
+            var policy = await ac.CreatePolicy(owner, hashCode, resource, location);
 
             Assert.True(hashCode.SequenceEqual(policy.HashCode));
-            Assert.Equal(externalResource, policy.ExternalResource);
+            Assert.Equal(resource, policy.Resource);
+            Assert.Equal(location, policy.Location);
         }
 
         [Fact]
@@ -318,12 +320,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreatePolicy(owner, hashCode, externalResource));
+                async () => await ac.CreatePolicy(owner, hashCode, resource, location));
         }
 
         [Fact]
@@ -332,11 +335,12 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreatePolicy(signer, hashCode, externalResource));
+                async () => await ac.CreatePolicy(signer, hashCode, resource, location));
         }
         #endregion
 
@@ -347,16 +351,18 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, 0, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 0, hashCode, resource, location);
 
             Assert.False(proposal.Accepted);
             Assert.True(hashCode.SequenceEqual(proposal.HashCode));
-            Assert.Equal(externalResource, proposal.ExternalResource);
+            Assert.Equal(resource, proposal.Resource);
+            Assert.Equal(location, proposal.Location);
         }
 
         [Fact]
@@ -365,12 +371,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreateProposal(owner, 0, hashCode, externalResource));
+                async () => await ac.CreateProposal(owner, 0, hashCode, resource, location));
         }
 
         [Fact]
@@ -379,13 +386,14 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.CreateProposal(signer, 0, hashCode, externalResource));
+                async () => await ac.CreateProposal(signer, 0, hashCode, resource, location));
         }
 
         [Fact]
@@ -394,12 +402,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 20);
             var proposals = await ac.GetProposals();
@@ -411,7 +420,8 @@ namespace BlockchainAuthIoT.Tests
             var newPolicy = policies.Last();
 
             Assert.True(hashCode.SequenceEqual(newPolicy.HashCode));
-            Assert.Equal(externalResource, newPolicy.ExternalResource);
+            Assert.Equal(resource, newPolicy.Resource);
+            Assert.Equal(location, newPolicy.Location);
         }
 
         [Fact]
@@ -420,12 +430,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 10);
             var proposals = await ac.GetProposals();
@@ -440,12 +451,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, 20, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 10);
             await ac.AcceptProposal(signer, proposal, 10);
@@ -463,12 +475,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, proposalPrice, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, proposalPrice, hashCode, resource, location);
 
             var initialBalance = await GetBalance(owner);
 
@@ -484,12 +497,13 @@ namespace BlockchainAuthIoT.Tests
             var random = new Random();
             var hashCode = new byte[32];
             random.NextBytes(hashCode);
-            var externalResource = "test";
+            var resource = "test";
+            var location = "example";
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
             await ac.SignContract(signer, 0);
-            var proposal = await ac.CreateProposal(owner, 0, hashCode, externalResource);
+            var proposal = await ac.CreateProposal(owner, 0, hashCode, resource, location);
 
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.AcceptProposal(owner, proposal, 0));

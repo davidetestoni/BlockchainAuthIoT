@@ -324,18 +324,18 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
-        /// Creates a new policy given a <paramref name="hashCode"/> for validation and an
-        /// <paramref name="externalResource"/> where the body of the policy can be found.
+        /// Creates a new policy given a <paramref name="hashCode"/> for validation, the <paramref name="resource"/>
+        /// that this proposal refers to, and and the <paramref name="location"/> where the body of the policy can be found.
         /// </summary>
         /// <remarks>Only an admin can perform this</remarks>
-        public async Task<Policy> CreatePolicy(string from, byte[] hashCode, string externalResource)
+        public async Task<Policy> CreatePolicy(string from, byte[] hashCode, string resource, string location)
         {
             if (hashCode.Length != 32)
                 throw new ArgumentException("Must be 32 bytes long", nameof(hashCode));
 
             var createFunction = contract.GetFunction("createPolicy");
             var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                hashCode, externalResource);
+                hashCode, resource, location);
 
             if (!transactionReceipt.Succeeded())
             {
@@ -376,15 +376,15 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
-        /// Creates a new proposal given a <paramref name="hashCode"/> for validation and an
-        /// <paramref name="externalResource"/> where the body of the proposal can be found.
+        /// Creates a new proposal given a <paramref name="hashCode"/> for validation, the <paramref name="resource"/>
+        /// that this proposal refers to, and and the <paramref name="location"/> where the body of the proposal can be found.
         /// </summary>
         /// <remarks>Only an admin can perform this</remarks>
-        public async Task<Proposal> CreateProposal(string from, BigInteger price, byte[] hashCode, string externalResource)
+        public async Task<Proposal> CreateProposal(string from, BigInteger price, byte[] hashCode, string resource, string location)
         {
             var createFunction = contract.GetFunction("createProposal");
             var transactionReceipt = await createFunction.SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(0), null,
-                price, hashCode, externalResource);
+                price, hashCode, resource, location);
 
             if (!transactionReceipt.Succeeded())
             {

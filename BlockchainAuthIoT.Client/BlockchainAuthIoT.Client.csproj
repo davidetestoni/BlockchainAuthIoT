@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlockchainAuthIoT.Core\BlockchainAuthIoT.Core.csproj" />
+    <ProjectReference Include="..\BlockchainAuthIoT.Shared\BlockchainAuthIoT.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

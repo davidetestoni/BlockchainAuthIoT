@@ -1,4 +1,5 @@
-﻿using Nethereum.Util;
+﻿using BlockchainAuthIoT.Shared.Services;
+using Nethereum.Util;
 using Nethereum.Web3.Accounts;
 using System;
 using System.IO;

@@ -1,9 +1,10 @@
 ﻿using BlockchainAuthIoT.Core;
 using BlockchainAuthIoT.Core.Utils;
+using BlockchainAuthIoT.DataProvider.Exceptions;
 using BlockchainAuthIoT.DataProvider.Extensions;
+using BlockchainAuthIoT.Shared.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Nethereum.Signer;
-using Nethereum.Web3;
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         private readonly IDistributedCache _cache;
         private readonly IWeb3Provider _web3Provider;
 
-        public TimeSpan TimestampValidity { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan TokenValidity { get; set; } = TimeSpan.FromHours(1);
 
         public TokenVerificationService(IDistributedCache cache, IWeb3Provider web3Provider)
         {
@@ -23,7 +24,8 @@ namespace BlockchainAuthIoT.DataProvider.Services
             _web3Provider = web3Provider;
         }
 
-        public async Task VerifyToken(string token)
+        /// <inheritdoc/>
+        public async Task<string> VerifyToken(string token)
         {
             var split = token.Split('|', 4);
             var providedContractAddress = split[0];
@@ -37,15 +39,15 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
             if (!signerAddress.Equals(providedSignerAddress, StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception("Signature mismatch");
+                throw new TokenVerificationException("Signature mismatch");
             }
 
             // Verify that the message signature hasn't expired
             var timestamp = TimeConverter.ToDateTimeUtc(BigInteger.Parse(providedTimestamp));
             
-            if ((DateTime.UtcNow - timestamp) > TimestampValidity)
+            if ((DateTime.UtcNow - timestamp) > TokenValidity)
             {
-                throw new Exception("The signature has expired");
+                throw new TokenVerificationException("The signature has expired");
             }
 
             // Verify that the signer is registered in the contract
@@ -55,15 +57,35 @@ namespace BlockchainAuthIoT.DataProvider.Services
             // On cache miss, query the contract and update the cache
             if (signer is null)
             {
-                var ac = await AccessControl.FromChain(_web3Provider.Web3, providedContractAddress);
+                AccessControl ac;
+
+                try
+                {
+                    ac = await AccessControl.FromChain(_web3Provider.Web3, providedContractAddress);
+                }
+                catch
+                {
+                    throw new TokenVerificationException("Invalid contract address");
+                }
+
+                // Make sure the contract is signed
+                var isSigned = await ac.IsSigned();
+
+                if (!isSigned)
+                {
+                    throw new TokenVerificationException("The contract is not signed");
+                }
+
                 signer = await ac.GetSigner();
-                await _cache.SetRecordAsync(providedContractAddress, signer, TimestampValidity, TimestampValidity);
+                await _cache.SetRecordAsync(providedContractAddress, signer, TokenValidity, TokenValidity);
             }
 
             if (!providedSignerAddress.Equals(signer, StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception("The user is not the signer of the provided contract");
+                throw new TokenVerificationException("The user is not the signer of the provided contract");
             }
+
+            return providedContractAddress;
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using BlockchainAuthIoT.DataProvider.Entities;
+using BlockchainAuthIoT.DataProvider.Exceptions;
+using BlockchainAuthIoT.DataProvider.Models.Policies;
 using BlockchainAuthIoT.DataProvider.Repositories;
 using BlockchainAuthIoT.DataProvider.Services;
 using BlockchainAuthIoT.Models;
@@ -17,22 +19,25 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
     {
         private readonly ILogger<TemperatureController> _logger;
         private readonly ITemperatureRepository _repo;
-        private readonly ITokenVerificationService _userVerification;
+        private readonly ITokenVerificationService _tokenVerification;
+        private readonly IPolicyVerificationService _policyVerification;
         private readonly IMapper _mapper;
 
-        public TemperatureController(ILogger<TemperatureController> logger, ITemperatureRepository repo, ITokenVerificationService userVerification)
+        public TemperatureController(ILogger<TemperatureController> logger, ITemperatureRepository repo,
+            ITokenVerificationService tokenVerification, IPolicyVerificationService policyVerification)
         {
             _logger = logger;
             _repo = repo;
-            _userVerification = userVerification;
+            _tokenVerification = tokenVerification;
+            _policyVerification = policyVerification;
             var config = new MapperConfiguration(cfg => cfg.CreateMap<TemperatureEntity, TemperatureReading>());
             _mapper = new Mapper(config);
         }
 
         [HttpGet]
-        public async Task<IEnumerable<TemperatureReading>> Latest(int count = 1, string deviceNames = "")
+        public async Task<ObjectResult> Latest(int count = 1, string deviceNames = "")
         {
-            // TODO: Move all this to a middleware
+            // TODO: Move the token verification to a middleware
             // Check if the request has the required header
             if (!Request.Headers.ContainsKey("Token"))
             {
@@ -40,21 +45,39 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
             }
 
             // Verify the token
+            string contractAddress = string.Empty;
             try
             {
-                await _userVerification.VerifyToken(Request.Headers["Token"]);
+                contractAddress = await _tokenVerification.VerifyToken(Request.Headers["Token"]);
             }
-            catch
+            catch (TokenVerificationException ex)
             {
-                Unauthorized("Token verification failed");
+                return new ObjectResult($"Token verification failed: {ex.Message}") { StatusCode = 401 };
             }
 
-            // TODO: Verify the policies
+            // Verify the policies
+            var deviceList = deviceNames.Split(',');
+            try
+            {
+                await _policyVerification.VerifyPolicy(contractAddress, "temperature/latest", new()
+                {
+                    new IntPolicyRule("max_items", max => count <= max),
+                    new StringPolicyRule("sensors", allowed => 
+                    {
+                        var allowedList = allowed.Split(',');
+                        return deviceList.All(d => allowedList.Contains(d));
+                    })
+                });
+            }
+            catch (PolicyVerificationException ex)
+            {
+                return new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
+            }
 
             // Send the data
-            var entities = await _repo.GetLatest(count, deviceNames.Split(','));
+            var entities = await _repo.GetLatest(count, deviceList);
             _logger.LogInformation($"Got {entities.Count} entities from the database");
-            return entities.Select(e => _mapper.Map<TemperatureReading>(e));
+            return new ObjectResult(entities.Select(e => _mapper.Map<TemperatureReading>(e)));
         }
     }
 }

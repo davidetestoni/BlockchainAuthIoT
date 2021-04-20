@@ -1,6 +1,6 @@
 ﻿using Nethereum.Web3;
 
-namespace BlockchainAuthIoT.Client.Services
+namespace BlockchainAuthIoT.Shared.Services
 {
     public interface IWeb3Provider
     {

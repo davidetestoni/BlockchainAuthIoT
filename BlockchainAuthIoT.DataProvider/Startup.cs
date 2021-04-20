@@ -1,6 +1,8 @@
 using System;
 using BlockchainAuthIoT.DataProvider.Repositories;
 using BlockchainAuthIoT.DataProvider.Services;
+using BlockchainAuthIoT.Shared.Repositories;
+using BlockchainAuthIoT.Shared.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +55,8 @@ namespace BlockchainAuthIoT.DataProvider
             // Transient
             services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Configuration.GetConnectionString("Chain")));
             services.AddTransient<ITokenVerificationService, TokenVerificationService>();
+            services.AddTransient<IPolicyVerificationService, PolicyVerificationService>();
+            services.AddTransient<IPolicyDatabase, WebPolicyDatabase>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

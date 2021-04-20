@@ -20,13 +20,15 @@ contract AccessControl {
         uint price; // The amount required to accept the proposal
         uint amountPaid; // The amount paid so far
         bytes32 hashCode; // The hash of the content of the proposal (for verification)
-        string externalResource; // A link to the file containing the proposal
+        string resource; // The name of the remote endpoint or resource
+        string location; // A link to the file containing the proposal
     }
 
     // An off-chain policy
     struct Policy {
         bytes32 hashCode; // The hash of the content of the policy (for verification)
-        string externalResource; // A link to the file containing the policy
+        string resource; // The name of the remote endpoint or resource
+        string location; // A link to the file containing the policy
     }
 
     // Actors involved
@@ -145,12 +147,13 @@ contract AccessControl {
 
     // Admins are able to add off-chain and on-chain policies, as long as
     // the contract is not yet initialized
-    function createPolicy (bytes32 hashCode, string memory externalResource) 
+    function createPolicy (bytes32 hashCode, string memory resource, string memory location) 
         public onlyAdmin onlyNotInitialized {
             uint policyId = policiesCount++;
             Policy storage newPolicy = policies[policyId];
             newPolicy.hashCode = hashCode;
-            newPolicy.externalResource = externalResource;
+            newPolicy.resource = resource;
+            newPolicy.location = location;
 
             emit PolicyAdded(policyId);
     }
@@ -199,15 +202,16 @@ contract AccessControl {
     // Admins are able to create proposals to grant access to additional
     // resources (and expand the contract). The signer may then approve the
     // proposal and promote it to a policy by paying the required price
-    function createProposal (uint proposalPrice, bytes32 hashCode, string memory externalResource) 
-        public onlyAdmin onlySigned {
+    function createProposal (uint proposalPrice, bytes32 hashCode, string memory resource,
+        string memory location) public onlyAdmin onlySigned {
             uint proposalId = proposalsCount++;
             Proposal storage newProposal = proposals[proposalId];
             newProposal.accepted = false;
             newProposal.price = proposalPrice;
             newProposal.amountPaid = 0;
             newProposal.hashCode = hashCode;
-            newProposal.externalResource = externalResource;
+            newProposal.resource = resource;
+            newProposal.location = location;
 
             emit ProposalCreated(proposalId);
     }
@@ -249,7 +253,8 @@ contract AccessControl {
             uint policyId = policiesCount++;
             Policy storage policy = policies[policyId];
             policy.hashCode = proposal.hashCode;
-            policy.externalResource = proposal.externalResource;
+            policy.resource = proposal.resource;
+            policy.location = proposal.location;
 
             emit ProposalAccepted(proposalId, policyId);
         }

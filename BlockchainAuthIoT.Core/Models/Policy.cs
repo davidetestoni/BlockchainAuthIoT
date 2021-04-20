@@ -11,6 +11,9 @@ namespace BlockchainAuthIoT.Core.Models
         public byte[] HashCode { get; set; }
 
         [Parameter("string", 2)]
-        public string ExternalResource { get; set; }
+        public string Resource { get; set; }
+
+        [Parameter("string", 3)]
+        public string Location { get; set; }
     }
 }
