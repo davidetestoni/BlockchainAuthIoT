@@ -35,7 +35,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         public async Task VerifyPolicy(string contractAddress, string resource, List<PolicyRule> rules)
         {
             // Search for a cached policy
-            var json = await _cache.GetRecordAsync<string>(resource);
+            var json = await _cache.GetRecordAsync<string>($"{contractAddress}_{resource}");
 
             // If there is no policy in the cache
             if (json is null)
@@ -73,13 +73,13 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
 
                 // Save it to the cache for later use
-                await _cache.SetRecordAsync(resource, json, PolicyValidity, PolicyValidity);
+                await _cache.SetRecordAsync($"{contractAddress}_{resource}", json, PolicyValidity, PolicyValidity);
             }
 
             var policy = JObject.Parse(json);
 
             // Verify that the validity period has already started
-            var startTime = policy.Value<DateTime>("start_time");
+            var startTime = policy["start_time"].ToObject<DateTime>();
 
             if (DateTime.UtcNow < startTime)
             {
@@ -87,7 +87,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             }
 
             // Verify that the validity period hasn't ended yet
-            var expiration = policy.Value<DateTime>("expiration");
+            var expiration = policy["expiration"].ToObject<DateTime>();
 
             if (DateTime.UtcNow > expiration)
             {
@@ -111,12 +111,12 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
                 catch
                 {
-                    throw new PolicyVerificationException(resource, $"Error while verifying rule for parameter {rule.Parameter}");
+                    throw new PolicyVerificationException(resource, $"Error while verifying rule for parameter '{rule.Parameter}'");
                 }
 
                 if (!respected)
                 {
-                    throw new PolicyVerificationException(resource, $"Rule on parameter {rule.Parameter} was not respected");
+                    throw new PolicyVerificationException(resource, $"Rule on parameter '{rule.Parameter}' was not respected");
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         private async Task VerifyOCP(AccessControl ac, string resource, List<PolicyRule> rules)
         {
             OCP ocp;
-            var json = await _cache.GetRecordAsync<string>($"ocp_{resource}");
+            var json = await _cache.GetRecordAsync<string>($"{ac.Address}_ocp_{resource}");
             
             if (json is not null)
             {
@@ -135,13 +135,14 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 var ocps = await ac.GetOCPs();
                 ocp = ocps.FirstOrDefault(p => p.Resource.Equals(resource, StringComparison.OrdinalIgnoreCase));
 
-                // Save it to the cache for later use
-                await _cache.SetRecordAsync($"ocp_{resource}", json, PolicyValidity, PolicyValidity);
-            }
+                if (ocp is null)
+                {
+                    throw new PolicyVerificationException(resource, $"No off-chain or on-chain policy found");
+                }
 
-            if (ocp is null)
-            {
-                throw new PolicyVerificationException(resource, $"No off-chain or on-chain policy found");
+                // Save it to the cache for later use
+                json = JsonConvert.SerializeObject(ocp);
+                await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}", json, PolicyValidity, PolicyValidity);
             }
 
             if (DateTime.UtcNow < ocp.StartTime)
@@ -162,13 +163,26 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 try
                 {
                     // TODO: Add caching for OCP parameters as well
-                    respected = rule switch
+                    switch (rule)
                     {
-                        BoolPolicyRule x => x.Function.Invoke(await ac.GetOCPBoolParam(ocp, rule.Parameter)),
-                        IntPolicyRule x => x.Function.Invoke(await ac.GetOCPIntParam(ocp, rule.Parameter)),
-                        StringPolicyRule x => x.Function.Invoke(await ac.GetOCPStringParam(ocp, rule.Parameter)),
-                        _ => throw new NotImplementedException(),
-                    };
+                        case BoolPolicyRule x:
+                            var boolValue = await ac.GetOCPBoolParam(ocp, rule.Parameter);
+                            respected = x.Function.Invoke(boolValue);
+                            break;
+
+                        case IntPolicyRule x:
+                            var intValue = await ac.GetOCPIntParam(ocp, rule.Parameter);
+                            respected = x.Function.Invoke(intValue);
+                            break;
+
+                        case StringPolicyRule x:
+                            var stringValue = await ac.GetOCPStringParam(ocp, rule.Parameter);
+                            respected = x.Function.Invoke(stringValue);
+                            break;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
                 }
                 catch
                 {
