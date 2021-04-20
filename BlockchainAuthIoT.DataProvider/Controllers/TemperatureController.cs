@@ -62,7 +62,7 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
                 await _policyVerification.VerifyPolicy(contractAddress, "temperature/latest", new()
                 {
                     new IntPolicyRule("max_items", max => count <= max),
-                    new StringPolicyRule("sensors", allowed => 
+                    new StringPolicyRule("devices", allowed => 
                     {
                         var allowedList = allowed.Split(',');
                         return deviceList.All(d => allowedList.Contains(d));
