@@ -21,12 +21,12 @@ namespace BlockchainAuthIoT.Client.Services
 
         public TestAccountProvider(IWeb3Provider web3Provider)
         {
-            // Unlock accounts
+            // Unlock accounts for 2 hours
             Identities = web3Provider.Web3.Eth.Accounts.SendRequestAsync().Result;
             Console.WriteLine("Unlocked accounts (for debug purposes):");
             foreach (var account in Identities)
             {
-                web3Provider.Web3.Personal.UnlockAccount.SendRequestAsync(account, "password", 120).Wait();
+                web3Provider.Web3.Personal.UnlockAccount.SendRequestAsync(account, "password", 2 * 60 * 60).Wait();
                 Console.WriteLine(account);
             }
 
