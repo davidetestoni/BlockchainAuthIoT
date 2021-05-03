@@ -14,7 +14,8 @@ namespace BlockchainAuthIoT.DataController
     {
         static void Main(string[] args)
         {
-            var db = new MySqlConnection("server=mysql;user=root;password=admin;database=iot");
+            var mysqlConnectionString = Environment.GetEnvironmentVariable("MYSQL_CONN") ?? "server=mysql;user=root;password=admin;database=iot";
+            var db = new MySqlConnection(mysqlConnectionString);
             var dbOpen = false;
 
             while (!dbOpen)
@@ -31,9 +32,10 @@ namespace BlockchainAuthIoT.DataController
                 }
             }
 
+            var rabbitConnectionString = Environment.GetEnvironmentVariable("RABBITMQ_CONN") ?? "amqp://guest:guest@rabbitmq:5672";
             var factory = new ConnectionFactory
             {
-                Uri = new Uri("amqp://guest:guest@rabbitmq:5672")
+                Uri = new Uri(rabbitConnectionString)
             };
 
             IConnection connection = null;

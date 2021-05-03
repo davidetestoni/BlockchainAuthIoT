@@ -22,9 +22,10 @@ namespace BlockchainAuthIoT.Device
                 sleepTime = 5000;
             }
 
+            var rabbitConnectionString = Environment.GetEnvironmentVariable("RABBITMQ_CONN") ?? "amqp://guest:guest@rabbitmq:5672";
             var factory = new ConnectionFactory
             {
-                Uri = new Uri("amqp://guest:guest@rabbitmq:5672")
+                Uri = new Uri(rabbitConnectionString)
             };
 
             IConnection connection = null;

@@ -31,8 +31,9 @@ namespace BlockchainAuthIoT.DataProvider
             services.AddDbContextPool<AppDbContext>(
                 dbContextOptions => dbContextOptions
                     .UseMySql(
-                        Configuration.GetConnectionString("MySql"),
-                        new MySqlServerVersion(Version.Parse(Configuration.GetSection("MySql")["Version"])),
+                        Environment.GetEnvironmentVariable("MYSQL_CONN") ?? Configuration.GetConnectionString("MySql"),
+                        new MySqlServerVersion(Version.Parse(
+                            Environment.GetEnvironmentVariable("MYSQL_VERSION") ?? Configuration.GetSection("MySql")["Version"])),
                         mySqlOptions => mySqlOptions
                             .CharSetBehavior(CharSetBehavior.NeverAppend))
                     
@@ -44,7 +45,7 @@ namespace BlockchainAuthIoT.DataProvider
             // Use Redis
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = Configuration.GetConnectionString("Redis");
+                options.Configuration = Environment.GetEnvironmentVariable("REDIS_CONN") ?? Configuration.GetConnectionString("Redis");
                 options.InstanceName = "iot_";
             });
 
@@ -53,7 +54,7 @@ namespace BlockchainAuthIoT.DataProvider
             services.AddScoped<IHumidityRepository, DbHumidityRepository>();
 
             // Transient
-            services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Environment.GetEnvironmentVariable("CHAIN_URL")
+            services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Environment.GetEnvironmentVariable("CHAIN_CONN")
                 ?? Configuration.GetConnectionString("Chain")));
             services.AddTransient<ITokenVerificationService, TokenVerificationService>();
             services.AddTransient<IPolicyVerificationService, PolicyVerificationService>();
