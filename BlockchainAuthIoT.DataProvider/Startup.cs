@@ -54,7 +54,7 @@ namespace BlockchainAuthIoT.DataProvider
             services.AddScoped<IHumidityRepository, DbHumidityRepository>();
 
             // Transient
-            services.AddTransient<IWeb3Provider>(_ => new TestWeb3Provider(Environment.GetEnvironmentVariable("CHAIN_CONN")
+            services.AddTransient<IWeb3Provider>(_ => new Web3Provider(Environment.GetEnvironmentVariable("CHAIN_CONN")
                 ?? Configuration.GetConnectionString("Chain")));
             services.AddTransient<ITokenVerificationService, TokenVerificationService>();
             services.AddTransient<IPolicyVerificationService, PolicyVerificationService>();

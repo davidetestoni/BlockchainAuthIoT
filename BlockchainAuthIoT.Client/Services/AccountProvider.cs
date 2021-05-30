@@ -39,6 +39,7 @@ namespace BlockchainAuthIoT.Client.Services
 
             File.WriteAllText(Path.Combine("Keystore", keystoreFile), json);
             account = Account.LoadFromKeyStore(json, password);
+            _web3Provider.Authenticate(Account);
             await RefreshBalance();
             return account;
         }
@@ -47,6 +48,7 @@ namespace BlockchainAuthIoT.Client.Services
         {
             var json = File.ReadAllText(Path.Combine("Keystore", keystoreFile));
             account = Account.LoadFromKeyStore(json, password);
+            _web3Provider.Authenticate(Account);
             await RefreshBalance();
             return account;
         }
