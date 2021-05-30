@@ -1,0 +1,21 @@
+﻿@page "/queries"
+
+@if (!AccessControl.ContractLoaded)
+{
+    <span class="text-warning">Load a contract first!</span>
+}
+else if (!AccountProvider.AccountLoaded)
+{
+    <span>Load your wallet first!</span>
+}
+else
+{
+    <EditForm Model="query">
+        <label>Query:</label>
+        <InputText class="w-100 mb-2" @bind-Value="query" />
+        <br />
+        <button class="btn-sm btn-success" @onclick="QueryResource"><span class="oi oi-media-play"></span> Query</button>
+    </EditForm>
+    <h6 class="mt-3">Result:</h6>
+    <p>@queryResult</p>
+}

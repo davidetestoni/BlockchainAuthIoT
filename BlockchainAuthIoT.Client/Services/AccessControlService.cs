@@ -16,9 +16,9 @@ namespace BlockchainAuthIoT.Client.Services
 {
     public class AccessControlService
     {
-        private readonly string emptyAddress = "0x0000000000000000000000000000000000000000";
+        private const string emptyAddress = "0x0000000000000000000000000000000000000000";
         private readonly IWeb3Provider _web3Provider;
-        private readonly TestAccountProvider _accountProvider;
+        private readonly IAccountProvider _accountProvider;
         private readonly IPolicyDatabase _policyDatabase;
         private AccessControl contract;
 
@@ -32,7 +32,7 @@ namespace BlockchainAuthIoT.Client.Services
         private List<Proposal> proposals = new();
 
         public bool ContractLoaded { get; private set; } = false;
-        public string ContractAddress => contract.Address;
+        public string ContractAddress => contract?.Address;
         public IEnumerable<string> Admins => admins;
         public IEnumerable<OCP> OCPs => ocps;
         public IEnumerable<Policy> Policies => policies;
@@ -42,7 +42,7 @@ namespace BlockchainAuthIoT.Client.Services
         public BigInteger Price => price;
         public BigInteger AmountPaid => amountPaid;
 
-        public AccessControlService(IWeb3Provider web3Provider, TestAccountProvider accountProvider,
+        public AccessControlService(IWeb3Provider web3Provider, IAccountProvider accountProvider,
             IPolicyDatabase policyDatabase)
         {
             _web3Provider = web3Provider;
@@ -52,7 +52,7 @@ namespace BlockchainAuthIoT.Client.Services
 
         public async Task DeployNewContract(string signer)
         {
-            var contract = await AccessControl.Deploy(_web3Provider.Web3, _accountProvider.CurrentIdentity, signer);
+            var contract = await AccessControl.Deploy(_web3Provider.Web3, _accountProvider.Address, signer);
             await LoadContract(contract.Address);
         }
 
@@ -75,14 +75,14 @@ namespace BlockchainAuthIoT.Client.Services
         public async Task AddAdmin(string adminAddress)
         {
             EnsureLoaded();
-            await contract.AddAdmin(_accountProvider.CurrentIdentity, adminAddress);
+            await contract.AddAdmin(_accountProvider.Address, adminAddress);
             await RefreshAdmins();
         }
 
         public async Task RemoveAdmin(string adminAddress)
         {
             EnsureLoaded();
-            await contract.RemoveAdmin(_accountProvider.CurrentIdentity, adminAddress);
+            await contract.RemoveAdmin(_accountProvider.Address, adminAddress);
             await RefreshAdmins();
         }
 
@@ -90,7 +90,7 @@ namespace BlockchainAuthIoT.Client.Services
         {
             EnsureLoaded();
             var wei = UnitConversion.Convert.ToWei(priceInEth, EthUnit.Ether);
-            await contract.InitializeContract(_accountProvider.CurrentIdentity, wei);
+            await contract.InitializeContract(_accountProvider.Address, wei);
             initialized = await contract.IsInitialized();
             price = await contract.GetPrice();
         }
@@ -98,7 +98,7 @@ namespace BlockchainAuthIoT.Client.Services
         public async Task SignContract()
         {
             EnsureLoaded();
-            await contract.SignContract(_accountProvider.CurrentIdentity, price);
+            await contract.SignContract(_accountProvider.Address, price);
             signed = await contract.IsSigned();
             amountPaid = await contract.GetAmountPaid();
         }
@@ -108,7 +108,7 @@ namespace BlockchainAuthIoT.Client.Services
         public async Task CreateOCP(OCPModel model)
         {
             EnsureLoaded();
-            await contract.CreateOCP(_accountProvider.CurrentIdentity, model.Resource, model.StartTime, model.Expiration);
+            await contract.CreateOCP(_accountProvider.Address, model.Resource, model.StartTime, model.Expiration);
             await RefreshOCPs();
         }
 
@@ -133,19 +133,19 @@ namespace BlockchainAuthIoT.Client.Services
         public Task SetOCPBoolParam(OCP ocp, string name, bool value)
         {
             EnsureLoaded();
-            return contract.SetOCPBoolParam(_accountProvider.CurrentIdentity, ocp, name, value);
+            return contract.SetOCPBoolParam(_accountProvider.Address, ocp, name, value);
         }
 
         public Task SetOCPIntParam(OCP ocp, string name, int value)
         {
             EnsureLoaded();
-            return contract.SetOCPIntParam(_accountProvider.CurrentIdentity, ocp, name, value);
+            return contract.SetOCPIntParam(_accountProvider.Address, ocp, name, value);
         }
 
         public Task SetOCPStringParam(OCP ocp, string name, string value)
         {
             EnsureLoaded();
-            return contract.SetOCPStringParam(_accountProvider.CurrentIdentity, ocp, name, value);
+            return contract.SetOCPStringParam(_accountProvider.Address, ocp, name, value);
         }
         #endregion
 
@@ -155,7 +155,7 @@ namespace BlockchainAuthIoT.Client.Services
             EnsureLoaded();
             var body = await _policyDatabase.GetPolicy(model.Location);
             var hashCode = Utils.ComputeHashCode(body);
-            await contract.CreatePolicy(_accountProvider.CurrentIdentity, hashCode, model.Resource, model.Location);
+            await contract.CreatePolicy(_accountProvider.Address, hashCode, model.Resource, model.Location);
             await RefreshPolicies();
         }
         #endregion
@@ -167,14 +167,14 @@ namespace BlockchainAuthIoT.Client.Services
             var body = await _policyDatabase.GetPolicy(model.Location);
             var hashCode = Utils.ComputeHashCode(body);
             var wei = UnitConversion.Convert.ToWei(model.Price, EthUnit.Ether);
-            await contract.CreateProposal(_accountProvider.CurrentIdentity, wei, hashCode, model.Resource, model.Location);
+            await contract.CreateProposal(_accountProvider.Address, wei, hashCode, model.Resource, model.Location);
             await RefreshProposals();
         }
 
         public async Task AcceptProposal(Proposal proposal)
         {
             EnsureLoaded();
-            await contract.AcceptProposal(_accountProvider.CurrentIdentity, proposal, proposal.Price);
+            await contract.AcceptProposal(_accountProvider.Address, proposal, proposal.Price);
             await RefreshProposals();
             await RefreshPolicies();
         }

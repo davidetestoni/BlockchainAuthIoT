@@ -1,0 +1,26 @@
+﻿<ul>
+    @foreach (var admin in AccessControl.Admins)
+    {
+        <li>
+            @admin
+            @if (!AccessControl.Initialized)
+            {
+                <button class="btn-sm btn-danger" @onclick="(async () => await RemoveAdmin(admin))">
+                    <span class="oi oi-x"></span>
+                </button>
+            }
+        </li>
+    }
+</ul>
+
+@if (!AccessControl.Initialized)
+{
+    <EditForm Model="this">
+        <h6>Add new</h6>
+        <label>Address:</label>
+        <InputText @bind-Value="newAdmin" />
+        <button class="btn-sm btn-success" @onclick="AddAdmin">
+            <span class="oi oi-plus"></span> Add
+        </button>
+    </EditForm>
+}

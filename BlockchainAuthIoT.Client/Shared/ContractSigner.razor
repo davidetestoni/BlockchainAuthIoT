@@ -1,0 +1,8 @@
+﻿<span><b>Signed:</b> @AccessControl.Signed</span>
+@if (!AccessControl.Signed)
+{
+    <button class="btn-sm btn-success ml-3" @onclick="SignContract">Sign Contract</button>
+}
+<br />
+<span><b>Price:</b> @AccessControl.Price.ToEth() (@AccessControl.AmountPaid.ToEth() paid)</span>
+<br />

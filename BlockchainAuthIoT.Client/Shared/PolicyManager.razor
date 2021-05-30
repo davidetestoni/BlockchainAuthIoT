@@ -1,0 +1,17 @@
+﻿<ul>
+    @foreach (var policy in AccessControl.Policies)
+    {
+        <li>
+            <b>Resource:</b> @policy.Resource | <b>Location:</b> @policy.Location | <b>Hash code:</b> @Convert.ToBase64String(policy.HashCode)
+        </li>
+    }
+</ul>
+
+<EditForm Model="newPolicy">
+    <h6>Create new</h6>
+    <label>Resource:</label>
+    <InputText @bind-Value="newPolicy.Resource" />
+    <label>Location:</label>
+    <InputText @bind-Value="newPolicy.Location" />
+    <button class="btn-sm btn-success" @onclick="CreatePolicy"><span class="oi oi-plus"></span> Create</button>
+</EditForm>

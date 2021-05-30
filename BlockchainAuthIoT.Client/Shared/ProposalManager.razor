@@ -1,0 +1,27 @@
+﻿<ul>
+    @foreach (var proposal in AccessControl.Proposals)
+    {
+        <li>
+            <b>Resource:</b> @proposal.Resource | <b>Location:</b> @proposal.Location | <b>Hash code:</b> @Convert.ToBase64String(proposal.HashCode)
+            | <b>Price:</b> @proposal.Price.ToEth() (@proposal.AmountPaid.ToEth() paid) | <b>Accepted:</b> @proposal.Accepted
+            @if (!proposal.Accepted && IsAdmin)
+            {
+                <button class="btn-sm btn-success" @onclick="(async () => await AcceptProposal(proposal))">Accept</button>
+            }
+        </li>
+    }
+</ul>
+
+@if (!IsAdmin)
+{
+    <EditForm Model="newProposal">
+        <h6>Create new</h6>
+        <label>Resource:</label>
+        <InputText @bind-Value="newProposal.Resource" />
+        <label>Location:</label>
+        <InputText @bind-Value="newProposal.Location" />
+        <label>Price (ETH):</label>
+        <InputNumber @bind-Value="newProposal.Price" />
+        <button class="btn-sm btn-success" @onclick="CreateProposal"><span class="oi oi-plus"></span> Create</button>
+    </EditForm>
+}

@@ -83,7 +83,7 @@ hr {
 .sidebar {
     background-color: #111 !important;
     background-image: none !important;
-    display: none; /* Remove this to display the sidebar */
+    /* display: none; Remove this to display the sidebar */
 }
 
 h5 {

@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Device", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.DataController", "BlockchainAuthIoT.DataController\BlockchainAuthIoT.DataController.csproj", "{AF8635E4-092C-4A86-86CE-CB2AA7027355}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockchainAuthIoT.Shared", "BlockchainAuthIoT.Shared\BlockchainAuthIoT.Shared.csproj", "{46519488-328E-4639-ADA5-D27ABA0187F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlockchainAuthIoT.Shared", "BlockchainAuthIoT.Shared\BlockchainAuthIoT.Shared.csproj", "{46519488-328E-4639-ADA5-D27ABA0187F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

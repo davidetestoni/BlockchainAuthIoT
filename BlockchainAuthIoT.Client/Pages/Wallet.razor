@@ -1,0 +1,27 @@
+﻿@page "/wallet"
+
+<h3>My wallet</h3>
+
+@if (!AccountProvider.AccountLoaded)
+{
+    <EditForm Model="wallet">
+        <h6>Keystore</h6>
+        <label>File:</label>
+        <InputText class="w-50 mb-2" @bind-Value="wallet.KeystoreFile" />
+        <br />
+        <label>Password:</label>
+        <InputText type="password" @bind-Value="wallet.Password" />
+        <br />
+        <button class="btn btn-sm btn-success" @onclick="Load">Load</button>
+        <button class="btn btn-sm btn-primary" @onclick="Create">Create</button>
+    </EditForm>
+}
+else
+{
+    <span><b>Address: </b>@AccountProvider.Address</span>
+    <br />
+    <span><b>Balance: </b>@AccountProvider.BalanceEth ETH</span>
+    <br />
+
+    <button class="btn btn-primary" @onclick="RefreshBalance">Refresh Balance</button>
+}

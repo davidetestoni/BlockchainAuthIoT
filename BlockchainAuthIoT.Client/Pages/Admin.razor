@@ -1,0 +1,41 @@
+﻿@page "/admin"
+
+@if (AccountProvider.AccountLoaded)
+{
+    <h5>Contract Loading / Deployment</h5>
+    <ContractLoader OnLoaded="StateHasChanged" />
+    <ContractDeployer OnDeployed="StateHasChanged" />
+    <hr />
+
+    @if (AccessControl.ContractLoaded)
+    {
+        <h5>Contract Management</h5>
+        <span><b>Initialized:</b> @AccessControl.Initialized</span>
+
+        @if (!AccessControl.Initialized)
+        {
+            <ContractInitializer />
+        }
+        <hr />
+
+        <h5>Admins</h5>
+        <AdminManager />
+        <hr />
+
+        <h5>On-Chain Policies</h5>
+        <OCPManager IsAdmin="true" />
+        <hr />
+
+        <h5>Policies</h5>
+        <PolicyManager IsAdmin="true" />
+        <hr />
+
+        <h5>Proposals</h5>
+        <ProposalManager IsAdmin="true" />
+        <hr />
+    }
+}
+else
+{
+    <span>Load your wallet first!</span>
+}

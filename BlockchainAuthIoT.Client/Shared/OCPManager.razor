@@ -1,0 +1,31 @@
+﻿<ul>
+    @foreach (var ocp in AccessControl.OCPs)
+    {
+        <li>
+            <b>Resource:</b> @ocp.Resource | <b>Start time:</b> @ocp.StartTime | <b>Expiration:</b> @ocp.Expiration
+            <button class="btn-sm btn-success" @onclick="(async () => await GetOCPBoolParam(ocp))">Get Bool</button>
+            <button class="btn-sm btn-success" @onclick="(async () => await GetOCPIntParam(ocp))">Get Int</button>
+            <button class="btn-sm btn-success" @onclick="(async () => await GetOCPStringParam(ocp))">Get String</button>
+            @if (IsAdmin)
+            {
+                <button class="btn-sm btn-primary" @onclick="(async () => await SetOCPBoolParam(ocp))">Set Bool</button>
+                <button class="btn-sm btn-primary" @onclick="(async () => await SetOCPIntParam(ocp))">Set Int</button>
+                <button class="btn-sm btn-primary" @onclick="(async () => await SetOCPStringParam(ocp))">Set String</button>
+            }
+        </li>
+    }
+</ul>
+
+@if (IsAdmin)
+{
+    <EditForm Model="newOCP">
+        <h6>Create new</h6>
+        <label>Resource:</label>
+        <InputText @bind-Value="newOCP.Resource" />
+        <label>Start Time:</label>
+        <InputDateTime @bind-Value="newOCP.StartTime" />
+        <label>Expiration:</label>
+        <InputDateTime @bind-Value="newOCP.Expiration" />
+        <button class="btn-sm btn-success" @onclick="CreateOCP"><span class="oi oi-plus"></span> Create</button>
+    </EditForm>
+}

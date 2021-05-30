@@ -1,0 +1,41 @@
+﻿@page "/signer"
+
+@if (AccountProvider.AccountLoaded)
+{
+    <h5>Contract Loading / Deployment</h5>
+    <ContractLoader OnLoaded="StateHasChanged" />
+    <hr />
+
+    @if (AccessControl.ContractLoaded)
+    {
+        <h5>Contract Management</h5>
+        <span><b>Initialized:</b> @AccessControl.Initialized</span>
+        <hr />
+
+        @if (!AccessControl.Signed)
+        {
+            <ContractSigner />
+            <hr />
+        }
+
+        <h5>Admins</h5>
+        <AdminManager />
+        <hr />
+
+        <h5>On-Chain Policies</h5>
+        <OCPManager IsAdmin="false" />
+        <hr />
+
+        <h5>Policies</h5>
+        <PolicyManager IsAdmin="false" />
+        <hr />
+
+        <h5>Proposals</h5>
+        <ProposalManager IsAdmin="false" />
+        <hr />
+    }
+}
+else
+{
+    <span>Load your wallet first!</span>
+}
