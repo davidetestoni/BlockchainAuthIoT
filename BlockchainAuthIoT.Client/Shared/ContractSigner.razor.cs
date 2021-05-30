@@ -10,6 +10,7 @@ namespace BlockchainAuthIoT.Client.Shared
     public partial class ContractSigner
     {
         [Inject] private AccessControlService AccessControl { get; set; }
+        [Parameter] public EventCallback Signed { get; set; }
 
         private async Task SignContract()
         {
@@ -19,6 +20,7 @@ namespace BlockchainAuthIoT.Client.Shared
                 {
                     await AccessControl.SignContract();
                     await js.AlertSuccess("Contract signed");
+                    await Signed.InvokeAsync();
                 }
                 catch (Exception ex)
                 {

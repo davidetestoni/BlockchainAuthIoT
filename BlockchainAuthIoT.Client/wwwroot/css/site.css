@@ -93,3 +93,7 @@ h5 {
 h6 {
     color: yellow;
 }
+
+.table {
+    color: unset;
+}

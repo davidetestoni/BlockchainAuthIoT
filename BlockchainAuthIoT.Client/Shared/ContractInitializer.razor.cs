@@ -9,6 +9,7 @@ namespace BlockchainAuthIoT.Client.Shared
     public partial class ContractInitializer
     {
         [Inject] private AccessControlService AccessControl { get; set; }
+        [Parameter] public EventCallback Initialized { get; set; }
 
         private decimal contractPriceEth = 0;
 
@@ -18,6 +19,7 @@ namespace BlockchainAuthIoT.Client.Shared
             {
                 await AccessControl.InitializeContract(contractPriceEth);
                 await js.AlertSuccess("Contract initialized");
+                await Initialized.InvokeAsync();
             }
             catch (Exception ex)
             {

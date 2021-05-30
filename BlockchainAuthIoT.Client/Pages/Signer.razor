@@ -2,19 +2,16 @@
 
 @if (AccountProvider.AccountLoaded)
 {
-    <h5>Contract Loading / Deployment</h5>
-    <ContractLoader OnLoaded="StateHasChanged" />
-    <hr />
-
     @if (AccessControl.ContractLoaded)
     {
-        <h5>Contract Management</h5>
-        <span><b>Initialized:</b> @AccessControl.Initialized</span>
+        <h5>Information</h5>
+        <ContractInfo />
         <hr />
 
         @if (!AccessControl.Signed)
         {
-            <ContractSigner />
+            <h5>Sign the contract</h5>
+            <ContractSigner Signed="StateHasChanged" />
             <hr />
         }
 
@@ -22,7 +19,7 @@
         <AdminManager />
         <hr />
 
-        <h5>On-Chain Policies</h5>
+        <h5>On-chain policies</h5>
         <OCPManager IsAdmin="false" />
         <hr />
 
@@ -31,8 +28,13 @@
         <hr />
 
         <h5>Proposals</h5>
-        <ProposalManager IsAdmin="false" />
+        <ProposalManager IsAdmin="false" ProposalAccepted="StateHasChanged" />
         <hr />
+    }
+    else
+    {
+        <h5>Load a contract</h5>
+        <ContractLoader OnLoaded="StateHasChanged" />
     }
 }
 else

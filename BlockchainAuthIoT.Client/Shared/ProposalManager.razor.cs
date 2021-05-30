@@ -13,6 +13,7 @@ namespace BlockchainAuthIoT.Client.Shared
     {
         [Inject] private AccessControlService AccessControl { get; set; }
         [Parameter] public bool IsAdmin { get; set; }
+        [Parameter] public EventCallback ProposalAccepted { get; set; }
 
         private ProposalModel newProposal = new();
 
@@ -38,6 +39,7 @@ namespace BlockchainAuthIoT.Client.Shared
                 {
                     await AccessControl.AcceptProposal(proposal);
                     await js.AlertSuccess("Proposal accepted");
+                    await ProposalAccepted.InvokeAsync();
                 }
                 catch (Exception ex)
                 {

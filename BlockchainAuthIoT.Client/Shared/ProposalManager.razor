@@ -4,7 +4,7 @@
         <li>
             <b>Resource:</b> @proposal.Resource | <b>Location:</b> @proposal.Location | <b>Hash code:</b> @Convert.ToBase64String(proposal.HashCode)
             | <b>Price:</b> @proposal.Price.ToEth() (@proposal.AmountPaid.ToEth() paid) | <b>Accepted:</b> @proposal.Accepted
-            @if (!proposal.Accepted && IsAdmin)
+            @if (!proposal.Accepted && !IsAdmin)
             {
                 <button class="btn-sm btn-success" @onclick="(async () => await AcceptProposal(proposal))">Accept</button>
             }
@@ -12,7 +12,7 @@
     }
 </ul>
 
-@if (!IsAdmin)
+@if (IsAdmin)
 {
     <EditForm Model="newProposal">
         <h6>Create new</h6>
