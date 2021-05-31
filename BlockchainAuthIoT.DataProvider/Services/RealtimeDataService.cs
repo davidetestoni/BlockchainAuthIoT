@@ -5,6 +5,7 @@ using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BlockchainAuthIoT.DataProvider.Services
@@ -15,7 +16,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         private readonly IPolicyVerificationService _policyVerification;
         private IConnection connection;
         private IModel channel;
-        private readonly string[] queues;
+        private readonly string[] queues = new[] { "temperatureRT", "humidityRT" };
         private readonly DeliveryMethod deliveryMethod;
 
         public RealtimeDataService(IConfiguration config, RealtimeServer server, IPolicyVerificationService policyVerification)
@@ -26,7 +27,6 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var realtimeOptions = config.GetSection("Realtime");
 
             var rabbitmqConnectionString = config.GetConnectionString("RabbitMQ");
-            queues = realtimeOptions["Queues"].Split(',');
             deliveryMethod = (DeliveryMethod)Enum.Parse(typeof(DeliveryMethod), realtimeOptions["DeliveryMethod"]);
 
             var factory = new ConnectionFactory
@@ -62,29 +62,51 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 channel.QueueDeclare(queue, true, false, false, null);
 
                 var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += (sender, e) => NotifyClients(e.Body.ToArray(), queue, deliveryMethod);
+                consumer.Received += async (sender, e) => await NotifyClients(e.Body.ToArray(), queue, deliveryMethod);
 
                 channel.BasicConsume(queue, true, consumer);
             }
         }
 
-        private void NotifyClients(byte[] data, string resource, DeliveryMethod deliveryMethod)
+        private async Task NotifyClients(byte[] data, string resource, DeliveryMethod deliveryMethod)
         {
             foreach (var client in _server.Peers)
             {
-                // TODO: Check policies
+                // If the client didn't ask for this resource, continue
+                if (client.Resource != resource)
+                {
+                    continue;
+                }
 
+                // Check if the client has access to this resource
                 try
                 {
-                    client.NetPeer.Send(data, deliveryMethod);
+                    await _policyVerification.VerifyPolicy(client.ContractAddress, resource, new());
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error when sending data to {client.NetPeer.EndPoint}");
-                    Console.WriteLine(ex);
+                    SendError(client.NetPeer, ex);
                 }
+
+                SendData(client.NetPeer, data);
             }
         }
+
+        private void SendData(NetPeer client, byte[] data)
+        {
+            try
+            {
+                client.Send(data, deliveryMethod);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error when sending data to {client.EndPoint}");
+                Console.WriteLine(ex);
+            }
+        }
+
+        private void SendError(NetPeer client, Exception ex)
+            => SendData(client, Encoding.UTF8.GetBytes(ex.Message));
 
         public void Dispose()
         {

@@ -1,6 +1,8 @@
 ﻿using BlockchainAuthIoT.DataProvider.Models.Realtime;
+using BlockchainAuthIoT.Shared.Messages;
 using LiteNetLib;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -29,18 +31,19 @@ namespace BlockchainAuthIoT.DataProvider.Services
             eventListener = new EventBasedNetListener();
             server = new NetManager(eventListener);
             server.Start(IPAddress.Any, IPAddress.IPv6Any, port);
+            Console.WriteLine($"Realtime server listening on UDP port {port}");
 
             // On connection request, verify the token and accept
             eventListener.ConnectionRequestEvent += async request =>
             {
-                var token = request.Data.GetString();
+                var message = JsonConvert.DeserializeObject<RealtimeAuthMessage>(request.Data.GetString());
 
                 try
                 {
                     var ip = request.RemoteEndPoint.Address.ToString();
                     var port = request.RemoteEndPoint.Port;
-                    var contractAddress = await _tokenVerification.VerifyToken(token);
-                    peers[(ip, port)] = new(null, contractAddress);
+                    var contractAddress = await _tokenVerification.VerifyToken(message.Token);
+                    peers[(ip, port)] = new(null, contractAddress, message.Resource);
                     request.Accept();
                 }
                 catch
@@ -82,6 +85,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         {
             cancellationTokenSource.Cancel();
             server.Stop();
+            Console.WriteLine("Realtime server stopped");
         }
     }
 }

@@ -49,6 +49,10 @@ namespace BlockchainAuthIoT.DataProvider
                 options.InstanceName = "iot_";
             });
 
+            // Singletons
+            services.AddSingleton<RealtimeServer>();
+            services.AddSingleton<RealtimeDataService>();
+
             // Repositories
             services.AddScoped<ITemperatureRepository, DbTemperatureRepository>();
             services.AddScoped<IHumidityRepository, DbHumidityRepository>();
@@ -79,6 +83,10 @@ namespace BlockchainAuthIoT.DataProvider
             {
                 endpoints.MapControllers();
             });
+
+            // These lines are needed to start the realtime server
+            var server = app.ApplicationServices.GetService<RealtimeServer>();
+            var realtime = app.ApplicationServices.GetService<RealtimeDataService>();
         }
     }
 }

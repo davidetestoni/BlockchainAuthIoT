@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="0.9.5" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
   </ItemGroup>
 

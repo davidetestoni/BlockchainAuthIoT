@@ -1,0 +1,33 @@
+﻿@page "/realtime"
+
+@if (!AccessControl.ContractLoaded)
+{
+    <span class="text-warning">Load a contract first!</span>
+}
+else if (!AccountProvider.AccountLoaded)
+{
+    <span>Load your wallet first!</span>
+}
+else if (!RealtimeClient.Connected)
+{
+    <EditForm Model="remote">
+        <label>Host:</label>
+        <InputText @bind-Value="remote.Host" />
+        <br />
+        <label>Port:</label>
+        <InputNumber @bind-Value="remote.Port" />
+        <br />
+        <label>Resource:</label>
+        <InputText @bind-Value="remote.Resource" />
+        <br />
+        <button class="btn-sm btn-success" @onclick="Connect">Connect</button>
+    </EditForm>
+}
+else
+{
+    <button class="btn-sm btn-success" @onclick="Disconnect">Disconnect</button>
+    @foreach (var message in buffer.ToArray())
+    {
+        <p>@message</p>
+    }
+}

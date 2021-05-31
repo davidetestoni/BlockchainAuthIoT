@@ -1,8 +1,7 @@
 ﻿using BlockchainAuthIoT.Client.Extensions;
+using BlockchainAuthIoT.Client.Helpers;
 using BlockchainAuthIoT.Client.Services;
-using BlockchainAuthIoT.Core.Utils;
 using Microsoft.AspNetCore.Components;
-using Nethereum.Signer;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -22,10 +21,8 @@ namespace BlockchainAuthIoT.Client.Pages
             try
             {
                 // Generate the token
-                var timestamp = DateTime.UtcNow.ToUnixTime();
-                var message = $"{AccessControl.ContractAddress}|{AccountProvider.Address}|{timestamp}";
-                var signature = new MessageSigner().HashAndSign(message, AccountProvider.Account.PrivateKey);
-                var token = $"{message}|{signature}";
+                var token = TokenGenerator.Generate(AccessControl.ContractAddress,
+                    AccountProvider.Address, AccountProvider.Account.PrivateKey);
                 await js.Log($"Generated token: {token}");
 
                 // Perform the GET request
