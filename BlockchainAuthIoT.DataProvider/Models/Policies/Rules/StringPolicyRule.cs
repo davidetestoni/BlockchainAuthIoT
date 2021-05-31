@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BlockchainAuthIoT.DataProvider.Models.Policies
+namespace BlockchainAuthIoT.DataProvider.Models.Policies.Rules
 {
     public class StringPolicyRule : PolicyRule
     {

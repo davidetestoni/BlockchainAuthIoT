@@ -1,4 +1,4 @@
-﻿namespace BlockchainAuthIoT.DataProvider.Models.Policies
+﻿namespace BlockchainAuthIoT.DataProvider.Models.Policies.Rules
 {
     public abstract class PolicyRule
     {

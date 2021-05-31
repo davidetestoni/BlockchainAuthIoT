@@ -56,11 +56,8 @@ namespace BlockchainAuthIoT.DataController
             var channel = connection.CreateModel();
 
             // TEMPERATURE
-            channel.QueueDeclare("temperature",
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
+            channel.QueueDeclare("temperature", true, false, false, null);
+            channel.QueueDeclare("humidity", true, false, false, null);
 
             var temperatureConsumer = new EventingBasicConsumer(channel);
             temperatureConsumer.Received += (sender, e) =>
@@ -83,12 +80,6 @@ namespace BlockchainAuthIoT.DataController
             channel.BasicConsume("temperature", true, temperatureConsumer);
 
             // HUMIDITY
-            channel.QueueDeclare("humidity",
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-
             var humidityConsumer = new EventingBasicConsumer(channel);
             humidityConsumer.Received += (sender, e) =>
             {

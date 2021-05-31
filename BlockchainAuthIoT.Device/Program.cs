@@ -10,6 +10,10 @@ namespace BlockchainAuthIoT.Device
     static class Program
     {
         private static readonly Random rand = new();
+        private static readonly JsonSerializerSettings jsonSettings = new()
+        { 
+            TypeNameHandling = TypeNameHandling.All
+        };
 
         static void Main(string[] args)
         {
@@ -44,12 +48,10 @@ namespace BlockchainAuthIoT.Device
             }
 
             var channel = connection.CreateModel();
-
-            channel.QueueDeclare("temperature",
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
+            channel.QueueDeclare("temperature", true, false, false, null);
+            channel.QueueDeclare("temperatureRT", true, false, false, null);
+            channel.QueueDeclare("humidity", true, false, false, null);
+            channel.QueueDeclare("humidityRT", true, false, false, null);
 
             while (true)
             {
@@ -62,10 +64,14 @@ namespace BlockchainAuthIoT.Device
                     Value = temperature
                 };
 
-                var json = JsonConvert.SerializeObject(message);
+                var json = JsonConvert.SerializeObject(message, jsonSettings);
                 var body = Encoding.UTF8.GetBytes(json);
 
+                // This publishes to the normal temperature queue, which is consumed by the DataController
                 channel.BasicPublish("", "temperature", null, body);
+
+                // This publishes to the realtime temperature queue, which is consumed by the DataProvider
+                channel.BasicPublish("", "temperatureRT", null, body);
 
                 var humidity = RandomDouble(rand, 50, 60);
 
@@ -76,10 +82,15 @@ namespace BlockchainAuthIoT.Device
                     Value = humidity
                 };
 
-                json = JsonConvert.SerializeObject(message);
+                json = JsonConvert.SerializeObject(message, jsonSettings);
                 body = Encoding.UTF8.GetBytes(json);
 
+                // This publishes to the normal humidity queue, which is consumed by the DataController
                 channel.BasicPublish("", "humidity", null, body);
+
+                // This publishes to the realtime humidity queue, which is consumed by the DataProvider
+                channel.BasicPublish("", "humidityRT", null, body);
+
                 Console.WriteLine($"Published temperature ({temperature} °C) and humidity ({humidity}%)");
 
                 Thread.Sleep(sleepTime);

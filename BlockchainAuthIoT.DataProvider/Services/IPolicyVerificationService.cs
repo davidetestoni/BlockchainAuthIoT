@@ -1,5 +1,4 @@
-﻿using BlockchainAuthIoT.Core;
-using BlockchainAuthIoT.DataProvider.Models.Policies;
+﻿using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

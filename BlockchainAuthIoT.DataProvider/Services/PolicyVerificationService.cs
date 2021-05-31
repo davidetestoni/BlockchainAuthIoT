@@ -2,7 +2,7 @@
 using BlockchainAuthIoT.Core.Models;
 using BlockchainAuthIoT.DataProvider.Exceptions;
 using BlockchainAuthIoT.DataProvider.Extensions;
-using BlockchainAuthIoT.DataProvider.Models.Policies;
+using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
 using BlockchainAuthIoT.Shared;
 using BlockchainAuthIoT.Shared.Repositories;
 using BlockchainAuthIoT.Shared.Services;

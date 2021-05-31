@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using BlockchainAuthIoT.DataProvider.Entities;
 using BlockchainAuthIoT.DataProvider.Exceptions;
-using BlockchainAuthIoT.DataProvider.Models.Policies;
+using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
 using BlockchainAuthIoT.DataProvider.Repositories;
 using BlockchainAuthIoT.DataProvider.Services;
 using BlockchainAuthIoT.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
