@@ -5,6 +5,7 @@
 
 BlockchainAuthIoT.Client/Contracts/
 appsettings.*.json
+Keystore/
 
 # User-specific files
 *.rsuser
