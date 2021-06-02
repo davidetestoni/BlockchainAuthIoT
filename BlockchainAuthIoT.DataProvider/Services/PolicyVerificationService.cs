@@ -49,7 +49,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
                 catch
                 {
-                    throw new PolicyVerificationException(resource, "Invalid contract address");
+                    throw new ContractNotFoundException(contractAddress);
                 }
 
                 var contractPolicies = await ac.GetPolicies();
@@ -111,12 +111,12 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
                 catch
                 {
-                    throw new PolicyVerificationException(resource, $"Error while verifying rule for parameter '{rule.Parameter}'");
+                    // If something goes wrong, assume it's invalid
                 }
 
                 if (!respected)
                 {
-                    throw new PolicyVerificationException(resource, $"Rule on parameter '{rule.Parameter}' was not respected");
+                    throw new PolicyRuleVerificationException(resource, rule.Parameter);
                 }
             }
         }
@@ -137,7 +137,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
                 if (ocp is null)
                 {
-                    throw new PolicyVerificationException(resource, $"No off-chain or on-chain policy found");
+                    throw new PolicyNotFoundException(resource);
                 }
 
                 // Save it to the cache for later use
@@ -186,12 +186,12 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
                 catch
                 {
-                    throw new PolicyVerificationException(resource, $"Error while verifying rule for parameter {rule.Parameter}");
+                    // If something goes wrong, assume it's invalid
                 }
 
                 if (!respected)
                 {
-                    throw new PolicyVerificationException(resource, $"Rule on parameter {rule.Parameter} was not respected");
+                    throw new PolicyRuleVerificationException(resource, rule.Parameter);
                 }
             }
         }

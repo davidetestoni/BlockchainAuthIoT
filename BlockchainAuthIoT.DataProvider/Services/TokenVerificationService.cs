@@ -65,7 +65,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
                 catch
                 {
-                    throw new TokenVerificationException("Invalid contract address");
+                    throw new ContractNotFoundException(providedContractAddress);
                 }
 
                 // Make sure the contract is signed
@@ -73,7 +73,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
                 if (!isSigned)
                 {
-                    throw new TokenVerificationException("The contract is not signed");
+                    throw new InvalidContractException(providedContractAddress, "The contract is not signed");
                 }
 
                 signer = await ac.GetSigner();
@@ -82,7 +82,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
             if (!providedSignerAddress.Equals(signer, StringComparison.OrdinalIgnoreCase))
             {
-                throw new TokenVerificationException("The user is not the signer of the provided contract");
+                throw new InvalidContractException(providedContractAddress, "The user is not the signer of the provided contract");
             }
 
             return providedContractAddress;

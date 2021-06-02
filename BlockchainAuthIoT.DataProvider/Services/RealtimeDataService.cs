@@ -1,5 +1,9 @@
-﻿using LiteNetLib;
+﻿using BlockchainAuthIoT.DataProvider.Exceptions;
+using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
+using BlockchainAuthIoT.Models;
+using LiteNetLib;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -78,13 +82,26 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     continue;
                 }
 
-                // Check if the client has access to this resource
+                // Check if the client has access to this resource and to the devices
                 try
                 {
-                    await _policyVerification.VerifyPolicy(client.ContractAddress, resource, new());
+                    var reading = JsonConvert.DeserializeObject<Reading>(Encoding.UTF8.GetString(data));
+                    await _policyVerification.VerifyPolicy(client.ContractAddress, resource, new List<PolicyRule>
+                    {
+                        new StringPolicyRule("devices", allowed =>
+                        {
+                            var allowedList = allowed.Split(',');
+                            return allowedList.Contains(reading.Device);
+                        })
+                    });
+                }
+                catch (PolicyRuleVerificationException)
+                {
+                    // We violate a policy rule, so we just skip sending this piece of data
                 }
                 catch (Exception ex)
                 {
+                    // If it's any other exception, send the error to the client
                     SendError(client.NetPeer, ex);
                 }
 
