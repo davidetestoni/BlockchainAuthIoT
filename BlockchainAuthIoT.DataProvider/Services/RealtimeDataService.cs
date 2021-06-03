@@ -74,6 +74,8 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
         private async Task NotifyClients(byte[] data, string resource, DeliveryMethod deliveryMethod)
         {
+            var reading = JsonConvert.DeserializeObject<Reading>(Encoding.UTF8.GetString(data));
+
             foreach (var client in _server.Peers)
             {
                 // If the client didn't ask for this resource, continue
@@ -85,7 +87,6 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 // Check if the client has access to this resource and to the devices
                 try
                 {
-                    var reading = JsonConvert.DeserializeObject<Reading>(Encoding.UTF8.GetString(data));
                     await _policyVerification.VerifyPolicy(client.ContractAddress, resource, new List<PolicyRule>
                     {
                         new StringPolicyRule("devices", allowed =>
@@ -94,6 +95,8 @@ namespace BlockchainAuthIoT.DataProvider.Services
                             return allowedList.Contains(reading.Device);
                         })
                     });
+
+                    SendData(client.NetPeer, data);
                 }
                 catch (PolicyRuleVerificationException)
                 {
@@ -104,8 +107,6 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     // If it's any other exception, send the error to the client
                     SendError(client.NetPeer, ex);
                 }
-
-                SendData(client.NetPeer, data);
             }
         }
 

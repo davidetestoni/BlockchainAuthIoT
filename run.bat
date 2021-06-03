@@ -1,30 +1,40 @@
-rem ===================
-rem Davide Testoni 2021
-rem ===================
+@echo off
+echo ===================
+echo Davide Testoni 2021
+echo ===================
 
-rem Build the Device and the docker image
+echo Building the Device and the docker image
+@echo on
 cd BlockchainAuthIoT.Device
 dotnet publish -c Release
 docker build -t davidetestoni/iotdevice:latest .
 cd ..
 
-rem Build the Data Controller and the docker image
+@echo off
+echo Building the Data Controller and the docker image
+@echo on
 cd BlockchainAuthIoT.DataController
 dotnet publish -c Release
 docker build -t davidetestoni/iotdatacontroller:latest .
 cd ..
 
-rem Build the Data Provider and the docker image
+@echo off
+echo Building the Data Provider and the docker image
+@echo on
 cd BlockchainAuthIoT.DataProvider
 dotnet publish -c Release
 docker build -t davidetestoni/iotdataprovider:latest .
 cd ..
 
-rem Build the Client and the docker image
+@echo off
+echo Building the Client and the docker image
+@echo on
 cd BlockchainAuthIoT.Client
 dotnet publish -c Release
 docker build -t davidetestoni/iotclient:latest .
 cd ..
 
-rem Start compose
+@echo off
+echo Starting compose
+@echo on
 docker-compose up

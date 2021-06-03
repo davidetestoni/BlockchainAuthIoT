@@ -18,10 +18,17 @@ namespace BlockchainAuthIoT.Client.Services
         {
             listener = new EventBasedNetListener();
             client = new NetManager(listener);
-            
+
+            listener.PeerConnectedEvent += peer =>
+            {
+                Console.WriteLine($"Connected to {peer.EndPoint}");
+            };
+
             listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
             {
-                MessageReceived?.Invoke(this, dataReader.GetString());
+                var message = dataReader.GetString();
+                Console.WriteLine($"Got message: {message}");
+                MessageReceived?.Invoke(this, message);
                 dataReader.Recycle();
             };
 
@@ -31,9 +38,17 @@ namespace BlockchainAuthIoT.Client.Services
                 {
                     if (client.IsRunning)
                     {
-                        client.PollEvents();
-                        await Task.Delay(15);
+                        try
+                        {
+                            client.PollEvents();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
                     }
+
+                    await Task.Delay(150);
                 }
             });
         }
@@ -49,6 +64,7 @@ namespace BlockchainAuthIoT.Client.Services
                 Token = token
             };
 
+            client.Start();
             client.Connect(host, port, JsonConvert.SerializeObject(authMessage));
         }
 

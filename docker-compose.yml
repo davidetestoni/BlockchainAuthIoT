@@ -29,8 +29,11 @@ services:
   # Data provider
   dataprovider:
     image: "davidetestoni/iotdataprovider:latest"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
     ports:
       - "3000:3000"
+      - "6390:6390"
     links:
       - redis
       - rabbitmq
@@ -40,6 +43,8 @@ services:
   # Admin Client
   admin-client:
     image: "davidetestoni/iotclient:latest"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
     ports:
       - "4000:4000"
     links:
@@ -48,6 +53,8 @@ services:
   # Signer Client
   signer-client:
     image: "davidetestoni/iotclient:latest"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
     ports:
       - "4001:4000"
     links:

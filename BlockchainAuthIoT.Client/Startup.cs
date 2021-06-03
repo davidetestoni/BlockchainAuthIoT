@@ -31,6 +31,7 @@ namespace BlockchainAuthIoT.Client
             services.AddSingleton<IAccountProvider, AccountProvider>();
             services.AddSingleton<AccessControlService>();
             services.AddSingleton<IPolicyDatabase, WebPolicyDatabase>();
+            services.AddSingleton<RealtimeClient>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

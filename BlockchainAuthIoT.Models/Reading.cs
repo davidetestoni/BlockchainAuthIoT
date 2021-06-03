@@ -2,7 +2,7 @@
 
 namespace BlockchainAuthIoT.Models
 {
-    public abstract class Reading
+    public class Reading
     {
         public DateTime Date { get; set; }
         public string Device { get; set; }

@@ -36,6 +36,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             // On connection request, verify the token and accept
             eventListener.ConnectionRequestEvent += async request =>
             {
+                Console.WriteLine($"{request.RemoteEndPoint} requested a connection");
                 var message = JsonConvert.DeserializeObject<RealtimeAuthMessage>(request.Data.GetString());
 
                 try
@@ -43,23 +44,15 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     var ip = request.RemoteEndPoint.Address.ToString();
                     var port = request.RemoteEndPoint.Port;
                     var contractAddress = await _tokenVerification.VerifyToken(message.Token);
-                    peers[(ip, port)] = new(null, contractAddress, message.Resource);
-                    request.Accept();
+                    var peer = request.Accept();
+                    peers[(ip, port)] = new(peer, contractAddress, message.Resource);
+                    Console.WriteLine($"{peer.EndPoint} connected");
                 }
                 catch
                 {
                     Console.WriteLine($"{request.RemoteEndPoint} failed to connect. Invalid token.");
                     request.Reject();
                 }
-            };
-
-            // When a peer connects, log it to console
-            eventListener.PeerConnectedEvent += peer =>
-            {
-                var ip = peer.EndPoint.Address.ToString();
-                var port = peer.EndPoint.Port;
-                peers[(ip, port)].NetPeer = peer;
-                Console.WriteLine($"{peer.EndPoint} connected");
             };
 
             // Periodically refresh

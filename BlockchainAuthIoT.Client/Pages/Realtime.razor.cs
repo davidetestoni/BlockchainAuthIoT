@@ -23,6 +23,7 @@ namespace BlockchainAuthIoT.Client.Pages
             RealtimeClient.MessageReceived += UpdateBuffer;
 
             RealtimeClient.Connect(remote.Host, remote.Port, remote.Resource, token);
+            StateHasChanged();
         }
 
         private void Disconnect()
