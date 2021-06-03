@@ -1,4 +1,5 @@
-﻿@page "/realtime"
+﻿@using BlockchainAuthIoT.Models 
+@page "/realtime"
 
 @if (!AccessControl.ContractLoaded)
 {
@@ -25,9 +26,34 @@ else if (!RealtimeClient.Connected)
 }
 else
 {
-    <button class="btn-sm btn-success" @onclick="Disconnect">Disconnect</button>
-    @foreach (var message in buffer.ToArray())
-    {
-        <p>@message</p>
-    }
+    <button class="btn-sm btn-success mb-3" @onclick="Disconnect">Disconnect</button>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Device</th>
+                <th scope="col">Reading</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reading in buffer.ToArray())
+            {
+                <tr>
+                    <td>@reading.Date.ToShortTimeString()</td>
+                    <td>@reading.Device</td>
+
+                    @switch (reading)
+                    {
+                        case TemperatureReading x:
+                            <td>@x.Value</td>
+                            break;
+
+                        case HumidityReading x:
+                            <td>@x.Value</td>
+                            break;
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
 }

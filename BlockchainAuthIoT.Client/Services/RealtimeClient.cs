@@ -26,8 +26,7 @@ namespace BlockchainAuthIoT.Client.Services
 
             listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
             {
-                var message = dataReader.GetString();
-                Console.WriteLine($"Got message: {message}");
+                var message = dataReader.GetString(10000);
                 MessageReceived?.Invoke(this, message);
                 dataReader.Recycle();
             };

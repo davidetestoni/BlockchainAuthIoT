@@ -2,6 +2,7 @@
 using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
 using BlockchainAuthIoT.Models;
 using LiteNetLib;
+using LiteNetLib.Utils;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -66,15 +67,16 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 channel.QueueDeclare(queue, true, false, false, null);
 
                 var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += async (sender, e) => await NotifyClients(e.Body.ToArray(), queue, deliveryMethod);
+                consumer.Received += async (sender, e) => await NotifyClients(
+                    Encoding.UTF8.GetString(e.Body.ToArray()), queue);
 
                 channel.BasicConsume(queue, true, consumer);
             }
         }
 
-        private async Task NotifyClients(byte[] data, string resource, DeliveryMethod deliveryMethod)
+        private async Task NotifyClients(string data, string resource)
         {
-            var reading = JsonConvert.DeserializeObject<Reading>(Encoding.UTF8.GetString(data));
+            var reading = JsonConvert.DeserializeObject<Reading>(data);
 
             foreach (var client in _server.Peers)
             {
@@ -110,11 +112,13 @@ namespace BlockchainAuthIoT.DataProvider.Services
             }
         }
 
-        private void SendData(NetPeer client, byte[] data)
+        private void SendData(NetPeer client, string data)
         {
             try
             {
-                client.Send(data, deliveryMethod);
+                var writer = new NetDataWriter();
+                writer.Put(data);
+                client.Send(writer, deliveryMethod);
             }
             catch (Exception ex)
             {
@@ -124,7 +128,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         }
 
         private void SendError(NetPeer client, Exception ex)
-            => SendData(client, Encoding.UTF8.GetBytes(ex.Message));
+            => SendData(client, ex.Message);
 
         public void Dispose()
         {

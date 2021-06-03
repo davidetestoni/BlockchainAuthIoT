@@ -24,5 +24,13 @@ namespace BlockchainAuthIoT.Client.Helpers
         }
 
         public T[] ToArray() => queue.ToArray();
+
+        public void Clear()
+        {
+            lock (lockObject)
+            {
+                queue.Clear();
+            }
+        }
     }
 }

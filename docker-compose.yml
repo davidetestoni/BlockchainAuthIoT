@@ -5,7 +5,7 @@ services:
     image: "davidetestoni/iotdevice:latest"
     environment:
       - DEVICE_NAME=Sensor_1
-      - DEVICE_SLEEP=10000
+      - DEVICE_SLEEP=1000
     links:
       - rabbitmq
       
@@ -14,7 +14,7 @@ services:
     image: "davidetestoni/iotdevice:latest"
     environment:
       - DEVICE_NAME=Sensor_2
-      - DEVICE_SLEEP=8000
+      - DEVICE_SLEEP=800
     links:
       - rabbitmq
 
