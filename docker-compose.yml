@@ -36,17 +36,22 @@ services:
       - rabbitmq
     external_links:
       - mysql
-      - chain
 
-  # Client
-  client:
+  # Admin Client
+  admin-client:
     image: "davidetestoni/iotclient:latest"
     ports:
       - "4000:4000"
     links:
       - dataprovider
-    external_links:
-      - chain
+
+  # Signer Client
+  signer-client:
+    image: "davidetestoni/iotclient:latest"
+    ports:
+      - "4001:4000"
+    links:
+      - dataprovider
 
   # Rabbit MQ (service bus)
   rabbitmq:
