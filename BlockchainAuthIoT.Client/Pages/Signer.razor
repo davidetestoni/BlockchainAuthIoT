@@ -11,7 +11,7 @@
         @if (!AccessControl.Signed)
         {
             <h5>Sign the contract</h5>
-            <ContractSigner Signed="StateHasChanged" />
+            <ContractSigner Signed="async () => await InvokeAsync(StateHasChanged)" />
             <hr />
         }
 
@@ -28,13 +28,13 @@
         <hr />
 
         <h5>Proposals</h5>
-        <ProposalManager IsAdmin="false" ProposalAccepted="StateHasChanged" />
+        <ProposalManager IsAdmin="false" ProposalAccepted="async () => await InvokeAsync(StateHasChanged)" />
         <hr />
     }
     else
     {
         <h5>Load a contract</h5>
-        <ContractLoader OnLoaded="StateHasChanged" />
+        <ContractLoader OnLoaded="async () => await InvokeAsync(StateHasChanged)" />
     }
 }
 else

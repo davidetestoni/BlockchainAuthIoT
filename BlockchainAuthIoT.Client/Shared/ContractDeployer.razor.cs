@@ -20,6 +20,7 @@ namespace BlockchainAuthIoT.Client.Shared
                 await AccessControl.DeployNewContract(signerAddress);
                 var contractAddress = AccessControl.ContractAddress;
                 await js.AlertSuccess($"Deployed new contract at {contractAddress}");
+                await InvokeAsync(StateHasChanged);
                 await OnDeployed.InvokeAsync(contractAddress);
             }
             catch (Exception ex)

@@ -11,7 +11,7 @@
         @if (!AccessControl.Initialized)
         {
             <h5>Initialize the contract</h5>
-            <ContractInitializer Initialized="StateHasChanged" />
+            <ContractInitializer Initialized="async () => await InvokeAsync(StateHasChanged)" />
             <hr />
         }
 
@@ -28,14 +28,14 @@
         <hr />
 
         <h5>Proposals</h5>
-        <ProposalManager IsAdmin="true" ProposalAccepted="StateHasChanged" />
+        <ProposalManager IsAdmin="true" ProposalAccepted="async () => await InvokeAsync(StateHasChanged)" />
         <hr />
     }
     else
     {
         <h5>Load or deploy a contract</h5>
-        <ContractLoader OnLoaded="StateHasChanged" />
-        <ContractDeployer OnDeployed="StateHasChanged" />
+        <ContractLoader OnLoaded="async () => await InvokeAsync(StateHasChanged)" />
+        <ContractDeployer OnDeployed="async () => await InvokeAsync(StateHasChanged)" />
     }
 }
 else

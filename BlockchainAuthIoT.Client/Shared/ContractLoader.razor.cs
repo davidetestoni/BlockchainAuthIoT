@@ -19,6 +19,7 @@ namespace BlockchainAuthIoT.Client.Shared
             {
                 await AccessControl.LoadContract(contractAddress);
                 await js.AlertSuccess("Contract loaded");
+                await InvokeAsync(StateHasChanged);
                 await OnLoaded.InvokeAsync();
             }
             catch (Exception ex)
