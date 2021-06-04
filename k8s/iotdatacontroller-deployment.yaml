@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iotdatacontroller-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: iotdatacontroller
+  template:
+    metadata:
+      labels:
+        component: iotdatacontroller
+    spec:
+      containers:
+        - name: iotdatacontroller
+          image: davidetestoni/iotdatacontroller:latest
+          env:
+            - name: MYSQL_CONN
+              value: "server=mysql;user=root;password=admin;database=iot"
+            - name: RABBITMQ_CONN
+              value: "amqp://guest:guest@rabbitmq:5672"

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: mysql
+  ports:
+    - port: 3306 # port of the ClusterIP service
+      targetPort: 3306 # port inside the container

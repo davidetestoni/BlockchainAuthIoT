@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iotdataprovider-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: iotdataprovider
+  template:
+    metadata:
+      labels:
+        component: iotdataprovider
+    spec:
+      containers:
+        - name: iotdataprovider
+          image: davidetestoni/iotdataprovider:latest
+          ports:
+            - containerPort: 3000
+            - containerPort: 3690
+          env:
+            - name: ConnectionStrings__MySql
+              value: "server=mysql;user=root;password=admin;database=iot"
+            - name: ConnectionStrings__Redis
+              value: "redis:6379"
+            - name: ConnectionStrings__RabbitMQ
+              value: "amqp://guest:guest@rabbitmq:5672"
+            - name: MySql__Version
+              value: "8.0.23"
+            - name: Realtime__Port
+              value: '6390'
+            - name: Realtime__DeliveryMethod
+              value: "ReliableOrdered"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Release

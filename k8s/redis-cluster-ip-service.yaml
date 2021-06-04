@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector: # what pods we expose
+    component: redis
+  ports:
+    - port: 6379 # port that the other object uses to reach the pod's port
+      targetPort: 6379 # port inside the pod

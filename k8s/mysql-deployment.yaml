@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: mysql
+  template:
+    metadata:
+      labels:
+        component: mysql
+    spec:
+      volumes: # request these volumes when deploying
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim
+      containers:
+        - name: mysql
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          volumeMounts: # specify how to mount the volume
+            - name: mysql-storage
+              mountPath: /var/lib/mysql # folder (of the container) to map
+              subPath: mysql # subfolder of the PVC where to map data
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: admin

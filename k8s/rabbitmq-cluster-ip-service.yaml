@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: rabbitmq-cluster-ip-service
+spec:
+    type: ClusterIP
+    selector: # what pods we expose
+        component: rabbitmq
+    ports:
+      - name: control
+        port: 15672 # port that the other object uses to reach the pod's port
+        targetPort: 15672 # port inside the pod
+      - name: data
+        port: 5672
+        targetPort: 5672
