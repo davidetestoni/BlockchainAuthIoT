@@ -25,8 +25,9 @@ namespace BlockchainAuthIoT.DataController
                     db.Open();
                     dbOpen = true;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     Console.WriteLine("Cannot connect to the MySQL database, trying again in 5 seconds...");
                     Thread.Sleep(5000);
                 }
