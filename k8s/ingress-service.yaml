@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: ingress-myservicea
+  name: ingress-service
   annotations:
-    # use the shared ingress-nginx
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: nginx # we want to use nginx
+    nginx.ingress.kubernetes.io/rewrite-target: / # defines how to rewrite routes after matching (basically turns /api/ into /)
 spec:
   rules:
-  - http:
-      paths:
-      - path: /
-        backend:
-          serviceName: iotdataprovider-cluster-ip-service
-          servicePort: 3000
+    - http:
+        paths:
+          - path: /
+            backend:
+              serviceName: iotdataprovider-ip
+              servicePort: 3000

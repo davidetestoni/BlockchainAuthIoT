@@ -20,11 +20,11 @@ spec:
             - containerPort: 3690
           env:
             - name: ConnectionStrings__MySql
-              value: "server=mysql;user=root;password=admin;database=iot"
+              value: "server=mysql-ip;user=root;password=admin;database=iot"
             - name: ConnectionStrings__Redis
-              value: "redis:6379"
+              value: "redis-ip:6379"
             - name: ConnectionStrings__RabbitMQ
-              value: "amqp://guest:guest@rabbitmq:5672"
+              value: "amqp://guest:guest@rabbitmq-ip:5672"
             - name: MySql__Version
               value: "8.0.23"
             - name: Realtime__Port

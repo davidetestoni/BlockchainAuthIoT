@@ -14,4 +14,4 @@ spec:
         - name: DEVICE_SLEEP
           value: '800'
         - name: RABBITMQ_CONN
-          value: "amqp://guest:guest@rabbitmq:5672"
+          value: "amqp://guest:guest@rabbitmq-ip:5672"

@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: udp-services
 data:
-  6390: "iotdataprovider:6390"
+  6390: "iotdataprovider-ip:6390"

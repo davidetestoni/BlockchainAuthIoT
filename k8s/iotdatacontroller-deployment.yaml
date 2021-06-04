@@ -17,6 +17,6 @@ spec:
           image: davidetestoni/iotdatacontroller:latest
           env:
             - name: MYSQL_CONN
-              value: "server=mysql;user=root;password=admin;database=iot"
+              value: "server=mysql-ip;user=root;password=admin;database=iot"
             - name: RABBITMQ_CONN
-              value: "amqp://guest:guest@rabbitmq:5672"
+              value: "amqp://guest:guest@rabbitmq-ip:5672"
