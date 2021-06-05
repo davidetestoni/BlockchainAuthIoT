@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iotdataprovider-node-port
+spec:
+  type: NodePort
+  selector:
+    component: iotdataprovider
+  ports:
+    - name: udp
+      port: 6390 # to be used from inside the cluster
+      targetPort: 6390 # port on the selected pod
+      nodePort: 30000 # to be used from the outside world
+      protocol: UDP

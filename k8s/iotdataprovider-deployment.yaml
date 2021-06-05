@@ -17,7 +17,7 @@ spec:
           image: davidetestoni/iotdataprovider:latest
           ports:
             - containerPort: 3000
-            - containerPort: 3690
+            - containerPort: 6390
           env:
             - name: ConnectionStrings__MySql
               value: "server=mysql-ip;user=root;password=admin;database=iot"

@@ -11,7 +11,3 @@ spec:
       port: 3000 # port of the ClusterIP service
       targetPort: 3000 # port inside the container
       protocol: TCP
-    - name: realtime
-      port: 3690
-      targetPort: 3690
-      protocol: UDP
