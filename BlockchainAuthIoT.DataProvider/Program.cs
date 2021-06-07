@@ -16,16 +16,22 @@ namespace BlockchainAuthIoT.DataProvider
             using var scope = host.Services.CreateScope();
             var services = scope.ServiceProvider;
 
-            try
+            var migrated = false;
+            while (!migrated)
             {
-                var context = services.GetRequiredService<AppDbContext>();
-                await context.Database.MigrateAsync();
-                Console.WriteLine("Migrated the database");
-            }
-            catch (Exception ex)
-            {
-                var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "An error occurred during migration");
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    await context.Database.MigrateAsync();
+                    Console.WriteLine("Migrated the database");
+                    migrated = true;
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred during migration. Retrying in 5 seconds");
+                    await Task.Delay(5000);
+                }
             }
 
             await host.RunAsync();
