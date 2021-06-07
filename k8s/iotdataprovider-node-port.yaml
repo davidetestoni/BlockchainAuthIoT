@@ -10,5 +10,10 @@ spec:
     - name: udp
       port: 6390 # to be used from inside the cluster
       targetPort: 6390 # port on the selected pod
-      nodePort: 30000 # to be used from the outside world
+      nodePort: 30001 # to be used from the outside world
       protocol: UDP
+    - name: http
+      port: 3000
+      targetPort: 3000
+      nodePort: 30000
+      protocol: TCP
