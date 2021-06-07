@@ -1,7 +1,7 @@
 # Blockchain Auth IoT
 Master's thesis project on the use of an **Ethereum Blockchain** to manage **Authentication** and **Access Control** when querying data from an **Edge IoT Network**.
 
-### Local setup with docker-compose
+## Local setup with docker-compose
 First of all create a network called `iot` for our containers
 ```bash
 docker network create iot
@@ -25,7 +25,8 @@ chmod +x run.sh
 
 ### Setting up the policies
 Now access `http://localhost:4000` and `http://localhost:4001` and you will see the web-based clients for the admin and the signer.
-You can use the default wallets `admin.json` and `signer.json` on the Kovan testchain. To refill them you can use this [free faucet](https://faucet.kovan.network/)
+You can use the premade wallets `admin.json` and `signer.json` on the Kovan testchain. To refill them you can use this [free faucet](https://faucet.kovan.network/).
+
 After deploying a contract, you can add some policies, for example
 ```
 Resource: temperature/latest
@@ -40,7 +41,7 @@ Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Poli
 Resource: humidityRT
 Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/aebc7f8957606fd26a6ffdf4e75054e1b623587c/humidityRT.json
 ```
-A contract with 1-year expiration has already been deployed on the chain at `0x254ccedc328705d258661c3d1cb852a4f43763e5`.
+Alternatively, just load the premade contract on the Kovan testchain at `0x254ccedc328705d258661c3d1cb852a4f43763e5`.
 
 ### Querying the data
 After the contract has been initialized and signed, the signer can send a query to one of the test endpoints to see the data.
@@ -49,6 +50,9 @@ http://dataprovider:3000/temperature/latest?count=10&deviceNames=Sensor_1,Sensor
 http://dataprovider:3000/humidity/latest?count=10&deviceNames=Sensor_1
 ```
 
+### Realtime data
+In the realtime tab of the client, the signer can require connection to a realtime resource. By default, the server will be running on the host `dataprovider` on port 6390 (UDP). In addition, the client must provide the name of the desired resource, for example `temperatureRT` or `humidityRT` as configured above.
+
 ### Clearing the redis cache
 If you need to clear the redis cache for any reason, you can `sh` into the container and then type
 ```bash
@@ -56,6 +60,3 @@ redis-cli
 flushall
 ```
 CTRL+D twice to exit the `redis-cli` program and the `sh` shell.
-
-### Realtime data
-In the realtime tab of the client, the signer can require connection to a realtime resource. By default, the server will be running on the host `dataprovider` on port 6390 (UDP). In addition, the client must provide the name of the desired resource, for example `temperatureRT` or `humidityRT` as configured above.
