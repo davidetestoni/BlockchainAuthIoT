@@ -1,67 +1,52 @@
 # Blockchain Auth IoT
 Master's thesis project on the use of an **Ethereum Blockchain** to manage **Authentication** and **Access Control** when querying data from an **Edge IoT Network**.
 
-### Local setup
+### Local setup with docker-compose
 First of all create a network called `iot` for our containers
 ```bash
 docker network create iot
 ```
-Then start the `mysql` container
+Then start the `mysql` container with this command (it will create a database called `iot`). The iotdataprovider container will take care of applying migrations when it starts.
 ```bash
-docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin -d mysql:latest
+docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin MYSQL_DATABASE=iot -d mysql:latest
 ```
-Now connect to the database (e.g. using MySQL Workbench) and execute this query to recreate the schema for the test environment
-```sql
-CREATE SCHEMA `iot`;
+You will need to configure access to an ethereum blockchain (for example through infura, or a local chain like `geth` or `ganache`).
+You can do so by editing all instances of the `ConnectionStrings__Chain` environment variable in the `docker-compose.yml` file.
 
-CREATE TABLE `iot`.`Temperature` (
-  `Id` INT NOT NULL AUTO_INCREMENT,
-  `Date` DATETIME NOT NULL,
-  `Device` VARCHAR(45) NOT NULL,
-  `Value` DOUBLE NOT NULL,
-  PRIMARY KEY (`Id`));
-
-CREATE TABLE `iot`.`Humidity` (
-  `Id` INT NOT NULL AUTO_INCREMENT,
-  `Date` DATETIME NOT NULL,
-  `Device` VARCHAR(45) NOT NULL,
-  `Value` DOUBLE NOT NULL,
-  PRIMARY KEY (`Id`));
-```
-Now switch into the `geth-clique-linux` folder and start the testchain
-```bash
-docker build -t geth .
-docker run --name chain --network iot -p 30303:30303 -p 8545:8545 -it -d geth
-```
 Finally run the build script
 ```bash
 ./run.bat
 ```
+or on Linux
+```bash
+chmod +x run.sh
+./run.sh
+```
 
 ### Setting up the policies
-Now access `http://localhost:4000` and you will see the web-based client. After deploying a contract, you can add some policies, for example
+Now access `http://localhost:4000` and `http://localhost:4001` and you will see the web-based clients for the admin and the signer.
+You can use the default wallets `admin.json` and `signer.json` on the Kovan testchain. To refill them you can use this [free faucet](https://faucet.kovan.network/)
+After deploying a contract, you can add some policies, for example
 ```
 Resource: temperature/latest
-Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/master/temperature.json
+Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/688ac97c92aa749205f13d0c8ed4924e1c07a05f/temperature.json
 
 Resource: humidity/latest
-Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/master/humidity.json
+Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/688ac97c92aa749205f13d0c8ed4924e1c07a05f/humidity.json
+
+Resource: temperatureRT
+Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/aebc7f8957606fd26a6ffdf4e75054e1b623587c/temperatureRT.json
+
+Resource: humidityRT
+Location: https://raw.githubusercontent.com/davidetestoni/BlockchainAuthIoT.Policies/aebc7f8957606fd26a6ffdf4e75054e1b623587c/humidityRT.json
 ```
+A contract with 1-year expiration has already been deployed on the chain at `0x254ccedc328705d258661c3d1cb852a4f43763e5`.
 
 ### Querying the data
 After the contract has been initialized and signed, the signer can send a query to one of the test endpoints to see the data.
 ```
 http://dataprovider:3000/temperature/latest?count=10&deviceNames=Sensor_1,Sensor_2
 http://dataprovider:3000/humidity/latest?count=10&deviceNames=Sensor_1
-```
-Here is a list of the private keys of the unlocked accounts in the testchain. In the future, these will be automatically obtained from the keystore file after typing the correct password.
-```
-PUB|PRIV
-0x12890d2cce102216644c59dae5baed380d84830c|0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
-0x13f022d72158410433cbd66f5dd8bf6d2d129924|0xe8f16cd59a70e7fa6efd9320aa9d40d598ecdee6ee9cb6f0f3bf65047b68fd99
-0x20cbd8342f212af402bbd3385a94e9a7f96d2604|0xa21d2e24645bc5a2953891cc19c2be410831abbc5dd3a73d1b7f97ddca77219f
-0xa28a48ed350e7cdd58f14276fc32645610a0c703|0xd04b113487a9190b17ab0b540ed49cb556430f93f45be2574df69936a28cee77
-0x07c5c99b45548ef33cd5a6618cc121fde7337cf6|0x6bcc86014fb81679c1bbc6bc9175b2da1c39519d96f5b3372f368ab56ff42237
 ```
 
 ### Clearing the redis cache
@@ -71,3 +56,6 @@ redis-cli
 flushall
 ```
 CTRL+D twice to exit the `redis-cli` program and the `sh` shell.
+
+### Realtime data
+In the realtime tab of the client, the signer can require connection to a realtime resource. By default, the server will be running on the host `dataprovider` on port 6390 (UDP). In addition, the client must provide the name of the desired resource, for example `temperatureRT` or `humidityRT` as configured above.

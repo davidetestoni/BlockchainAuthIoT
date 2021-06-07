@@ -31,6 +31,7 @@ services:
     image: "davidetestoni/iotdataprovider:latest"
     environment:
       - ASPNETCORE_ENVIRONMENT=Release
+      - "ConnectionStrings__Chain=https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b"
     ports:
       - "3000:3000"
       - "6390:6390"
@@ -45,6 +46,7 @@ services:
     image: "davidetestoni/iotclient:latest"
     environment:
       - ASPNETCORE_ENVIRONMENT=Release
+      - "ConnectionStrings__Chain=https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b"
     ports:
       - "4000:4000"
     links:
@@ -55,6 +57,7 @@ services:
     image: "davidetestoni/iotclient:latest"
     environment:
       - ASPNETCORE_ENVIRONMENT=Release
+      - "ConnectionStrings__Chain=https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b"
     ports:
       - "4001:4000"
     links:

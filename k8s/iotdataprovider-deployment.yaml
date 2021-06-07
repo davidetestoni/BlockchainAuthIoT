@@ -19,6 +19,8 @@ spec:
             - containerPort: 3000
             - containerPort: 6390
           env:
+            - name: ConnectionStrings__Chain
+              value: "https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b"
             - name: ConnectionStrings__MySql
               value: "server=mysql-ip;user=root;password=admin;database=iot"
             - name: ConnectionStrings__Redis
