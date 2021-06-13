@@ -25,7 +25,7 @@ chmod +x run.sh
 
 ### Setting up the policies
 Now access `http://localhost:4000` and `http://localhost:4001` and you will see the web-based clients for the admin and the signer.
-You can use the premade wallets `admin.json` and `signer.json` on the Kovan testchain. To refill them you can use this [free faucet](https://faucet.kovan.network/).
+You can use the premade wallets `admin.json` and `signer.json` on the Kovan testchain (the password is `password`). To refill them you can use this [free faucet](https://faucet.kovan.network/).
 
 After deploying a contract, you can add some policies, for example
 ```
