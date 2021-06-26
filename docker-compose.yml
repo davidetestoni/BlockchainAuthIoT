@@ -32,6 +32,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Release
       - "ConnectionStrings__Chain=https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b"
+      - "Security__AuthorizedOwner=0x3eFC9BACf7e88b4d1538158e42C4cf7123eC263f"
     ports:
       - "3000:3000"
       - "6390:6390"

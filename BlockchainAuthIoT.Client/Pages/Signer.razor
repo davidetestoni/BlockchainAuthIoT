@@ -30,6 +30,8 @@
         <h5>Proposals</h5>
         <ProposalManager IsAdmin="false" ProposalAccepted="async () => await InvokeAsync(StateHasChanged)" />
         <hr />
+
+        <button class="btn btn-danger mb-3" @onclick="AccessControl.UnloadContract">Unload Contract</button>
     }
     else
     {

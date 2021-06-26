@@ -4,6 +4,7 @@ using BlockchainAuthIoT.DataProvider.Exceptions;
 using BlockchainAuthIoT.DataProvider.Extensions;
 using BlockchainAuthIoT.Shared.Services;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Nethereum.Signer;
 using System;
 using System.Numerics;
@@ -15,13 +16,16 @@ namespace BlockchainAuthIoT.DataProvider.Services
     {
         private readonly IDistributedCache _cache;
         private readonly IWeb3Provider _web3Provider;
+        private readonly IConfiguration _config;
 
         public TimeSpan TokenValidity { get; set; } = TimeSpan.FromHours(1);
 
-        public TokenVerificationService(IDistributedCache cache, IWeb3Provider web3Provider)
+        public TokenVerificationService(IDistributedCache cache, IWeb3Provider web3Provider,
+            IConfiguration config)
         {
             _cache = cache;
             _web3Provider = web3Provider;
+            _config = config;
         }
 
         /// <inheritdoc/>
@@ -74,6 +78,14 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 if (!isSigned)
                 {
                     throw new InvalidContractException(providedContractAddress, "The contract is not signed");
+                }
+
+                var authorizedOwner = _config.GetSection("Security")["AuthorizedOwner"];
+                var contractOwner = await ac.GetOwner();
+
+                if (!authorizedOwner.Equals(contractOwner, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidContractException(providedContractAddress, "Unauthorized contract owner");
                 }
 
                 signer = await ac.GetSigner();

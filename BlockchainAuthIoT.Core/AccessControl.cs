@@ -26,7 +26,7 @@ namespace BlockchainAuthIoT.Core
         /// <summary>
         /// The owner of the contract.
         /// </summary>
-        public string Owner { get;  init; }
+        public string Owner { get; private set; }
 
         public AccessControl(Contract contract)
         {
@@ -104,6 +104,15 @@ namespace BlockchainAuthIoT.Core
         /// </summary>
         public Task<string> GetSigner()
             => contract.GetFunction("signer").CallAsync<string>();
+
+        /// <summary>
+        /// Gets the address of the owner of the contract.
+        /// </summary>
+        public async Task<string> GetOwner()
+        {
+            Owner = await contract.GetFunction("owner").CallAsync<string>();
+            return Owner;
+        }
 
         /// <summary>
         /// Gets the list of all appointed admins.

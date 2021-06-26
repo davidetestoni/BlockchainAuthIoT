@@ -3,9 +3,9 @@
     {
         <li>
             @admin
-            @if (!AccessControl.Initialized)
+            @if (!AccessControl.Initialized && admin != AccessControl.Owner)
             {
-                <button class="btn-sm btn-danger" @onclick="(async () => await RemoveAdmin(admin))">
+                <button class="btn-sm btn-danger ml-2" @onclick="(async () => await RemoveAdmin(admin))">
                     <span class="oi oi-x"></span>
                 </button>
             }

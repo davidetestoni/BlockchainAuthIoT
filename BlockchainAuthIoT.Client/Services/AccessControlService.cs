@@ -21,11 +21,7 @@ namespace BlockchainAuthIoT.Client.Services
         private readonly IAccountProvider _accountProvider;
         private readonly IPolicyDatabase _policyDatabase;
         private AccessControl contract;
-
-        private bool initialized = false;
-        private bool signed = false;
-        private BigInteger price = 0;
-        private BigInteger amountPaid = 0;
+        
         private List<string> admins = new();
         private List<OCP> ocps = new();
         private List<Policy> policies = new();
@@ -37,10 +33,12 @@ namespace BlockchainAuthIoT.Client.Services
         public IEnumerable<OCP> OCPs => ocps;
         public IEnumerable<Policy> Policies => policies;
         public IEnumerable<Proposal> Proposals => proposals;
-        public bool Initialized => initialized;
-        public bool Signed => signed;
-        public BigInteger Price => price;
-        public BigInteger AmountPaid => amountPaid;
+        public bool Initialized { get; private set; } = false;
+        public bool Signed { get; private set; } = false;
+        public string Signer { get; private set; } = emptyAddress;
+        public string Owner { get; private set; } = emptyAddress;
+        public BigInteger Price { get; private set; } = 0;
+        public BigInteger AmountPaid { get; private set; } = 0;
 
         public AccessControlService(IWeb3Provider web3Provider, IAccountProvider accountProvider,
             IPolicyDatabase policyDatabase)
@@ -61,14 +59,22 @@ namespace BlockchainAuthIoT.Client.Services
             contract = await AccessControl.FromChain(_web3Provider.Web3, address);
             ContractLoaded = true;
 
-            initialized = await contract.IsInitialized();
-            signed = await contract.IsSigned();
-            price = await contract.GetPrice();
-            amountPaid = await contract.GetAmountPaid();
+            Initialized = await contract.IsInitialized();
+            Signer = await contract.GetSigner();
+            Owner = await contract.GetOwner();
+            Signed = await contract.IsSigned();
+            Price = await contract.GetPrice();
+            AmountPaid = await contract.GetAmountPaid();
             await RefreshAdmins();
             await RefreshOCPs();
             await RefreshPolicies();
             await RefreshProposals();
+        }
+
+        public void UnloadContract()
+        {
+            contract = null;
+            ContractLoaded = false;
         }
 
         #region Admins and Contract Management
@@ -91,16 +97,17 @@ namespace BlockchainAuthIoT.Client.Services
             EnsureLoaded();
             var wei = UnitConversion.Convert.ToWei(priceInEth, EthUnit.Ether);
             await contract.InitializeContract(_accountProvider.Address, wei);
-            initialized = await contract.IsInitialized();
-            price = await contract.GetPrice();
+            Initialized = await contract.IsInitialized();
+            Price = await contract.GetPrice();
         }
 
         public async Task SignContract()
         {
             EnsureLoaded();
-            await contract.SignContract(_accountProvider.Address, price);
-            signed = await contract.IsSigned();
-            amountPaid = await contract.GetAmountPaid();
+            await contract.SignContract(_accountProvider.Address, Price);
+            Signer = await contract.GetSigner();
+            Signed = await contract.IsSigned();
+            AmountPaid = await contract.GetAmountPaid();
         }
         #endregion
 
