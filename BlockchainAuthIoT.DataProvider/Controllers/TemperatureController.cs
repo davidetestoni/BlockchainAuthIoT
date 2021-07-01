@@ -72,6 +72,10 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
             {
                 return new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
             }
+            catch (PolicyRuleVerificationException ex)
+            {
+                return new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
+            }
 
             // Send the data
             var entities = await _repo.GetLatest(count, deviceList);
