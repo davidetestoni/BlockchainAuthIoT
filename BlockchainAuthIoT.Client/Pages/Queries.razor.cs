@@ -20,7 +20,7 @@ namespace BlockchainAuthIoT.Client.Pages
         {
             try
             {
-                // Generate the token
+                // Generate the token, using the ethereum address of the current user as the public key
                 var token = TokenGenerator.Generate(AccessControl.ContractAddress,
                     AccountProvider.Address, AccountProvider.Account.PrivateKey);
                 await js.Log($"Generated token: {token}");

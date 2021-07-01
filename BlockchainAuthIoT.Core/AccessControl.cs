@@ -115,6 +115,12 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
+        /// Gets the public key of the user of the contract.
+        /// </summary>
+        public Task<string> GetUserPubKey()
+            => contract.GetFunction("userPubKey").CallAsync<string>();
+
+        /// <summary>
         /// Gets the list of all appointed admins.
         /// </summary>
         public async Task<string[]> GetAdmins()
@@ -181,14 +187,15 @@ namespace BlockchainAuthIoT.Core
         }
 
         /// <summary>
-        /// Signs the contract by sending the <paramref name="amount"/> required. After being signed, the policies defined
+        /// Signs the contract by sending the <paramref name="amount"/> required and providing the public
+        /// key of the user that will access the data. After being signed, the policies defined
         /// in the contract are in effect and can be used to provide access control capabilities.
         /// </summary>
         /// <remarks>Only the signer can perform this</remarks>
-        public async Task SignContract(string from, BigInteger amount)
+        public async Task SignContract(string from, BigInteger amount, string userPubKey)
         {
             var transactionReceipt = await contract.GetFunction("signContract")
-                .SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(amount), null);
+                .SendTransactionAndWaitForReceiptAsync(from, gas, new HexBigInteger(amount), null, userPubKey);
 
             if (!transactionReceipt.Succeeded())
             {

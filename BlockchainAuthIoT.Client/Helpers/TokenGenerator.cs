@@ -6,10 +6,10 @@ namespace BlockchainAuthIoT.Client.Helpers
 {
     public static class TokenGenerator
     {
-        public static string Generate(string contractAddress, string signerAddress, string privateKey)
+        public static string Generate(string contractAddress, string userPubKey, string privateKey)
         {
             var timestamp = DateTime.UtcNow.ToUnixTime();
-            var message = $"{contractAddress}|{signerAddress}|{timestamp}";
+            var message = $"{contractAddress}|{userPubKey}|{timestamp}";
             var signature = new MessageSigner().HashAndSign(message, privateKey);
             return $"{message}|{signature}";
         }

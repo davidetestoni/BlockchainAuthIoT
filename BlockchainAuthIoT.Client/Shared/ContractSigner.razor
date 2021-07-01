@@ -1,7 +1,11 @@
 ﻿<span><b>Signed:</b> @AccessControl.Signed</span>
 @if (!AccessControl.Signed)
 {
-    <button class="btn-sm btn-success ml-3" @onclick="SignContract">Sign Contract</button>
+    <EditForm Model="userPubKey">
+        <label>Public key of the user of the contract:</label>
+        <InputText @bind-Value="userPubKey" />
+        <button class="btn-sm btn-success ml-3" @onclick="SignContract">Sign Contract</button>
+    </EditForm>
 }
 <br />
 <span><b>Price:</b> @AccessControl.Price.ToEth() (@AccessControl.AmountPaid.ToEth() paid)</span>

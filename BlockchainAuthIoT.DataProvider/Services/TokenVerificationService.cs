@@ -33,15 +33,16 @@ namespace BlockchainAuthIoT.DataProvider.Services
         {
             var split = token.Split('|', 4);
             var providedContractAddress = split[0];
-            var providedSignerAddress = split[1];
+            var providedUserPubKey = split[1];
             var providedTimestamp = split[2];
             var providedSignature = split[3];
 
-            // Verify that the signature is valid
-            var signerAddress = new MessageSigner().HashAndEcRecover(
-                 $"{providedContractAddress}|{providedSignerAddress}|{providedTimestamp}", providedSignature);
+            // Verify that the signature is valid. By default we expect an ethereum address.
+            // NOTE: This can be changed if a different encryption mechanism is used in the implementation.
+            var userPubKey = new MessageSigner().HashAndEcRecover(
+                 $"{providedContractAddress}|{providedUserPubKey}|{providedTimestamp}", providedSignature);
 
-            if (!signerAddress.Equals(providedSignerAddress, StringComparison.OrdinalIgnoreCase))
+            if (!userPubKey.Equals(providedUserPubKey, StringComparison.OrdinalIgnoreCase))
             {
                 throw new TokenVerificationException("Signature mismatch");
             }
@@ -56,10 +57,10 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
             // Verify that the signer is registered in the contract
             // Try to get it from the cache
-            var signer = await _cache.GetRecordAsync<string>(providedContractAddress);
+            var pubKey = await _cache.GetRecordAsync<string>(providedContractAddress);
 
             // On cache miss, query the contract and update the cache
-            if (signer is null)
+            if (pubKey is null)
             {
                 AccessControl ac;
 
@@ -88,13 +89,13 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     throw new InvalidContractException(providedContractAddress, "Unauthorized contract owner");
                 }
 
-                signer = await ac.GetSigner();
-                await _cache.SetRecordAsync(providedContractAddress, signer, TokenValidity, TokenValidity);
+                pubKey = await ac.GetUserPubKey();
+                await _cache.SetRecordAsync(providedContractAddress, pubKey, TokenValidity, TokenValidity);
             }
 
-            if (!providedSignerAddress.Equals(signer, StringComparison.OrdinalIgnoreCase))
+            if (!providedUserPubKey.Equals(pubKey, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidContractException(providedContractAddress, "The user is not the signer of the provided contract");
+                throw new InvalidContractException(providedContractAddress, "The provided public key is different from the one in the provided contract");
             }
 
             return providedContractAddress;

@@ -37,6 +37,7 @@ namespace BlockchainAuthIoT.Client.Services
         public bool Signed { get; private set; } = false;
         public string Signer { get; private set; } = emptyAddress;
         public string Owner { get; private set; } = emptyAddress;
+        public string UserPubKey { get; private set; } = string.Empty;
         public BigInteger Price { get; private set; } = 0;
         public BigInteger AmountPaid { get; private set; } = 0;
 
@@ -62,6 +63,7 @@ namespace BlockchainAuthIoT.Client.Services
             Initialized = await contract.IsInitialized();
             Signer = await contract.GetSigner();
             Owner = await contract.GetOwner();
+            UserPubKey = await contract.GetUserPubKey();
             Signed = await contract.IsSigned();
             Price = await contract.GetPrice();
             AmountPaid = await contract.GetAmountPaid();
@@ -101,12 +103,13 @@ namespace BlockchainAuthIoT.Client.Services
             Price = await contract.GetPrice();
         }
 
-        public async Task SignContract()
+        public async Task SignContract(string userPubKey)
         {
             EnsureLoaded();
-            await contract.SignContract(_accountProvider.Address, Price);
+            await contract.SignContract(_accountProvider.Address, Price, userPubKey);
             Signer = await contract.GetSigner();
             Signed = await contract.IsSigned();
+            UserPubKey = await contract.GetUserPubKey();
             AmountPaid = await contract.GetAmountPaid();
         }
         #endregion

@@ -8,7 +8,7 @@ docker network create iot
 ```
 Then start the `mysql` container with this command (it will create a database called `iot`). The iotdataprovider container will take care of applying migrations when it starts.
 ```bash
-docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin MYSQL_DATABASE=iot -d mysql:latest
+docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin -e MYSQL_DATABASE=iot -d mysql:latest
 ```
 You will need to configure access to an ethereum blockchain (for example through infura, or a local chain like `geth` or `ganache`).
 You can do so by editing all instances of the `ConnectionStrings__Chain` environment variable in the `docker-compose.yml` file.

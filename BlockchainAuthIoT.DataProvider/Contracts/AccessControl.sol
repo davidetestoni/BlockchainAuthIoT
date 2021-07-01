@@ -35,6 +35,7 @@ contract AccessControl {
     address payable public owner; // The admin that created the contract
     address[] public admins; // The admins that can propose policy changes
     address public signer; // The signer of this contract
+    string public userPubKey; // The public key of the user of this contract, appointed by the signer
 
     // State of the contract
     bool public initialized = false; // Whether the contract has been initialized
@@ -223,7 +224,7 @@ contract AccessControl {
     */
 
     // The signer can sign the contract (by sending enough money to cover the price)
-    function signContract () public onlySigner onlyInitialized onlyNotSigned payable {
+    function signContract (string memory pubKey) public onlySigner onlyInitialized onlyNotSigned payable {
         amountPaid += msg.value;
 
         // If the signer sent enough money, sign the contract and transfer the money to the owner
@@ -231,6 +232,7 @@ contract AccessControl {
         if (amountPaid >= price) {
             owner.transfer(price);
             signed = true;
+            userPubKey = pubKey;
 
             emit Signed();
         }

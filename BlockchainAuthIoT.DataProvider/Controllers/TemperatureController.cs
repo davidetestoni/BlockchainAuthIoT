@@ -76,6 +76,14 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
             {
                 return new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
             }
+            catch (ContractNotFoundException)
+            {
+                return new ObjectResult($"Contract not found") { StatusCode = 404 };
+            }
+            catch (PolicyNotFoundException ex)
+            {
+                return new ObjectResult($"The policy for resource {ex.Resource} was not found") { StatusCode = 404 };
+            }
 
             // Send the data
             var entities = await _repo.GetLatest(count, deviceList);
