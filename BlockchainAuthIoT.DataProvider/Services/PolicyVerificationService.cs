@@ -7,6 +7,7 @@ using BlockchainAuthIoT.Shared;
 using BlockchainAuthIoT.Shared.Repositories;
 using BlockchainAuthIoT.Shared.Services;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -25,11 +26,13 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
         public TimeSpan PolicyValidity { get; set; } = TimeSpan.FromHours(1);
 
-        public PolicyVerificationService(IDistributedCache cache, IWeb3Provider web3Provider, IPolicyDatabase policyDatabase)
+        public PolicyVerificationService(IDistributedCache cache, IWeb3Provider web3Provider,
+            IPolicyDatabase policyDatabase, IConfiguration config)
         {
             _cache = cache;
             _web3Provider = web3Provider;
             _policyDatabase = policyDatabase;
+            PolicyValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Security")["TokenValidity"]));
         }
 
         public async Task VerifyPolicy(string contractAddress, string resource, List<PolicyRule> rules)
