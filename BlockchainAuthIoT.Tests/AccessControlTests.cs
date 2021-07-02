@@ -97,7 +97,7 @@ namespace BlockchainAuthIoT.Tests
         {
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 20);
-            await ac.SignContract(signer, 20);
+            await ac.SignContract(signer, 20, signer);
 
             var signed = await ac.IsSigned();
             Assert.True(signed);
@@ -108,7 +108,7 @@ namespace BlockchainAuthIoT.Tests
         {
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 20);
-            await ac.SignContract(signer, 10);
+            await ac.SignContract(signer, 10, signer);
 
             var signed = await ac.IsSigned();
             Assert.False(signed);
@@ -122,8 +122,8 @@ namespace BlockchainAuthIoT.Tests
         {
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 20);
-            await ac.SignContract(signer, 10);
-            await ac.SignContract(signer, 10);
+            await ac.SignContract(signer, 10, signer);
+            await ac.SignContract(signer, 10, signer);
 
             var signed = await ac.IsSigned();
             Assert.True(signed);
@@ -135,7 +135,7 @@ namespace BlockchainAuthIoT.Tests
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 20);
             await Assert.ThrowsAsync<ContractException>(
-                async () => await ac.SignContract(owner, 20));
+                async () => await ac.SignContract(owner, 20, signer));
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace BlockchainAuthIoT.Tests
 
             var initialBalance = await GetBalance(owner);
 
-            await ac.SignContract(signer, contractPrice);
+            await ac.SignContract(signer, contractPrice, signer);
             var finalBalance = await GetBalance(owner);
 
             Assert.True(finalBalance.Value - initialBalance.Value > contractPrice);
@@ -356,7 +356,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, 0, hashCode, resource, location);
 
             Assert.False(proposal.Accepted);
@@ -391,7 +391,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             await Assert.ThrowsAsync<ContractException>(
                 async () => await ac.CreateProposal(signer, 0, hashCode, resource, location));
         }
@@ -407,7 +407,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 20);
@@ -435,7 +435,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 10);
@@ -456,7 +456,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, 20, hashCode, resource, location);
 
             await ac.AcceptProposal(signer, proposal, 10);
@@ -480,7 +480,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, proposalPrice, hashCode, resource, location);
 
             var initialBalance = await GetBalance(owner);
@@ -502,7 +502,7 @@ namespace BlockchainAuthIoT.Tests
 
             var ac = await DeployContract();
             await ac.InitializeContract(owner, 0);
-            await ac.SignContract(signer, 0);
+            await ac.SignContract(signer, 0, signer);
             var proposal = await ac.CreateProposal(owner, 0, hashCode, resource, location);
 
             await Assert.ThrowsAsync<ContractException>(

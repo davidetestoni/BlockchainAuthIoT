@@ -35,6 +35,9 @@ namespace BlockchainAuthIoT.DataProvider.Services
             PolicyValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Security")["TokenValidity"]));
         }
 
+        public Task VerifyPolicy(string contractAddress, string resource, PolicyRule rule)
+            => VerifyPolicy(contractAddress, resource, new List<PolicyRule>() { rule });
+
         public async Task VerifyPolicy(string contractAddress, string resource, List<PolicyRule> rules)
         {
             // Search for a cached policy
