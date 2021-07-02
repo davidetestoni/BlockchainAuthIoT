@@ -1,7 +1,7 @@
 ﻿using BlockchainAuthIoT.DataProvider.Exceptions;
+using BlockchainAuthIoT.DataProvider.Exceptions.Api;
 using BlockchainAuthIoT.DataProvider.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
@@ -11,15 +11,13 @@ namespace BlockchainAuthIoT.DataProvider.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<TokenVerificationMiddleware> _logger;
-        private readonly IHostEnvironment _env;
         private readonly ITokenVerificationService _tokenVerification;
 
         public TokenVerificationMiddleware(RequestDelegate next, ILogger<TokenVerificationMiddleware> logger,
-            IHostEnvironment env, ITokenVerificationService tokenVerification)
+            ITokenVerificationService tokenVerification)
         {
             _next = next;
             _logger = logger;
-            _env = env;
             _tokenVerification = tokenVerification;
         }
 
@@ -45,21 +43,15 @@ namespace BlockchainAuthIoT.DataProvider.Middleware
             }
             catch (ContractNotFoundException ex)
             {
-                context.Response.StatusCode = 404;
-                await context.Response.WriteAsync($"Contract not found at {ex.Address}");
-                _logger.LogError($"[{ip}] Sent an invalid contract address ({ex.Address})");            
+                throw new NotFoundException($"Contract not found at {ex.Address}", ex);
             }
             catch (TokenVerificationException ex)
             {
-                context.Response.StatusCode = 401;
-                await context.Response.WriteAsync($"Token verification failed: {ex.Message}");
-                _logger.LogError($"[{ip}] Token verification failed");
+                throw new UnauthorizedException($"Token verification failed: {ex.Message}", ex);
             }
             catch (InvalidContractException ex)
             {
-                context.Response.StatusCode = 403;
-                await context.Response.WriteAsync($"Invalid contract: {ex.Message}");
-                _logger.LogError($"[{ip}] Provided an invalid contract: {ex.Message}");
+                throw new ForbiddenException($"Invalid contract: {ex.Message}", ex);
             }
         }
     }

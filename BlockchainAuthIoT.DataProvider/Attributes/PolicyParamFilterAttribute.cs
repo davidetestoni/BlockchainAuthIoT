@@ -1,9 +1,8 @@
 ﻿using BlockchainAuthIoT.DataProvider.Exceptions;
+using BlockchainAuthIoT.DataProvider.Exceptions.Api;
 using BlockchainAuthIoT.DataProvider.Models.Policies.Rules;
 using BlockchainAuthIoT.DataProvider.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System;
 using System.Threading.Tasks;
 
 namespace BlockchainAuthIoT.DataProvider.Attributes
@@ -27,19 +26,19 @@ namespace BlockchainAuthIoT.DataProvider.Attributes
             }
             catch (PolicyVerificationException ex)
             {
-                context.Result = new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
+                throw new ForbiddenException($"Policy verification failed: {ex.Message}", ex);
             }
             catch (PolicyRuleVerificationException ex)
             {
-                context.Result = new ObjectResult($"Policy verification failed: {ex.Message}") { StatusCode = 403 };
+                throw new ForbiddenException($"Policy verification failed: {ex.Message}", ex);
             }
-            catch (ContractNotFoundException)
+            catch (ContractNotFoundException ex)
             {
-                context.Result = new ObjectResult("Contract not found") { StatusCode = 404 };
+                throw new NotFoundException($"Contract not found at {ex.Address}", ex);
             }
             catch (PolicyNotFoundException ex)
             {
-                context.Result = new ObjectResult($"The policy for resource {ex.Resource} was not found") { StatusCode = 404 };
+                throw new NotFoundException($"The policy for resource {ex.Resource} was not found", ex);
             }
         }
     }
