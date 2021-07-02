@@ -10,11 +10,11 @@ namespace BlockchainAuthIoT.DataProvider.Attributes
         private readonly BoolCondition condition;
         private readonly string policyParamName;
 
-        public ValidateBoolParamAttribute(string queryParamName, BoolCondition condition, string policyParamName)
+        public ValidateBoolParamAttribute(string queryParamName, BoolCondition condition, string policyParamName = null)
         {
             this.queryParamName = queryParamName;
             this.condition = condition;
-            this.policyParamName = policyParamName;
+            this.policyParamName = policyParamName ?? queryParamName;
         }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
