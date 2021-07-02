@@ -36,23 +36,8 @@ namespace BlockchainAuthIoT.DataProvider.Controllers
         [HttpGet]
         public async Task<ObjectResult> Latest(int count = 1, string deviceNames = "")
         {
-            // TODO: Move the token verification to a middleware
-            // Check if the request has the required header
-            if (!Request.Headers.ContainsKey("Token"))
-            {
-                Unauthorized("Missing Token header");
-            }
-
-            // Verify the token
-            string contractAddress = string.Empty;
-            try
-            {
-                contractAddress = await _tokenVerification.VerifyToken(Request.Headers["Token"]);
-            }
-            catch (TokenVerificationException ex)
-            {
-                return new ObjectResult($"Token verification failed: {ex.Message}") { StatusCode = 401 };
-            }
+            // Get the address set by the middleware
+            var contractAddress = (string)HttpContext.Items["contractAddress"];
 
             // Verify the policies
             var deviceList = deviceNames.Split(',');

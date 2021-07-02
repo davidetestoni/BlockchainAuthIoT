@@ -1,4 +1,5 @@
 using System;
+using BlockchainAuthIoT.DataProvider.Middleware;
 using BlockchainAuthIoT.DataProvider.Repositories;
 using BlockchainAuthIoT.DataProvider.Services;
 using BlockchainAuthIoT.Shared.Repositories;
@@ -68,6 +69,8 @@ namespace BlockchainAuthIoT.DataProvider
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseMiddleware<TokenVerificationMiddleware>();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
