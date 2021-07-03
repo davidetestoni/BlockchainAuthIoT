@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BlockchainAuthIoT.DataProvider.Attributes
 {
-    public class PolicyParamFilterAttribute : ActionFilterAttribute
+    public abstract class PolicyParamFilterAttribute : ActionFilterAttribute
     {
         // TODO: We only need to verify the policy once, and then the rules separately.
         // Calling the whole policy verification for each rule is inefficient, even if cached!

@@ -12,6 +12,13 @@ namespace BlockchainAuthIoT.DataProvider.Attributes
         private readonly ListCondition condition;
         private readonly string policyParamName;
 
+        /// <summary>
+        /// Adds blockchain policy-based validation for a list parameter, encoded as a string
+        /// of comma-separated values.
+        /// </summary>
+        /// <param name="queryParamName">The name of the parameter in the query string</param>
+        /// <param name="condition">The condition when comparing it to the policy-enforced rule</param>
+        /// <param name="policyParamName">The name of the parameter in the policy</param>
         public ValidateListParamAttribute(string queryParamName, ListCondition condition, string policyParamName = null)
         {
             this.queryParamName = queryParamName;

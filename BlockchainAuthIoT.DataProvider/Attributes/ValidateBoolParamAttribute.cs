@@ -10,6 +10,12 @@ namespace BlockchainAuthIoT.DataProvider.Attributes
         private readonly BoolCondition condition;
         private readonly string policyParamName;
 
+        /// <summary>
+        /// Adds blockchain policy-based validation for a boolean parameter.
+        /// </summary>
+        /// <param name="queryParamName">The name of the parameter in the query string</param>
+        /// <param name="condition">The condition when comparing it to the policy-enforced rule</param>
+        /// <param name="policyParamName">The name of the parameter in the policy</param>
         public ValidateBoolParamAttribute(string queryParamName, BoolCondition condition, string policyParamName = null)
         {
             this.queryParamName = queryParamName;
