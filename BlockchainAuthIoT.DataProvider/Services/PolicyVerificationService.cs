@@ -168,21 +168,20 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
                 try
                 {
-                    // TODO: Add caching for OCP parameters as well
                     switch (rule)
                     {
                         case BoolPolicyRule x:
-                            var boolValue = await ac.GetOCPBoolParam(ocp, rule.Parameter);
+                            var boolValue = await GetBoolFromOCP(ac, resource, ocp, x.Parameter);
                             respected = x.Function.Invoke(boolValue);
                             break;
 
                         case IntPolicyRule x:
-                            var intValue = await ac.GetOCPIntParam(ocp, rule.Parameter);
+                            var intValue = await GetIntFromOCP(ac, resource, ocp, x.Parameter);
                             respected = x.Function.Invoke(intValue);
                             break;
 
                         case StringPolicyRule x:
-                            var stringValue = await ac.GetOCPStringParam(ocp, rule.Parameter);
+                            var stringValue = await GetStringFromOCP(ac, resource, ocp, x.Parameter);
                             respected = x.Function.Invoke(stringValue);
                             break;
 
@@ -200,6 +199,63 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     throw new PolicyRuleVerificationException(resource, rule.Parameter);
                 }
             }
+        }
+
+        private async Task<bool> GetBoolFromOCP(AccessControl ac, string resource, OCP ocp, string name)
+        {
+            // Try to get it from cache
+            var record = await _cache.GetRecordAsync<bool?>($"{ac.Address}_ocp_{resource}_{name}");
+            
+            if (record.HasValue)
+            {
+                return record.Value;
+            }
+            
+            // Read it from the chain
+            var boolValue = await ac.GetOCPBoolParam(ocp, name);
+
+            // Cache it
+            await _cache.SetRecordAsync<bool>($"{ac.Address}_ocp_{resource}_{name}", boolValue, PolicyValidity, PolicyValidity);
+
+            return boolValue;
+        }
+
+        private async Task<int> GetIntFromOCP(AccessControl ac, string resource, OCP ocp, string name)
+        {
+            // Try to get it from cache
+            var record = await _cache.GetRecordAsync<int?>($"{ac.Address}_ocp_{resource}_{name}");
+
+            if (record.HasValue)
+            {
+                return record.Value;
+            }
+
+            // Read it from the chain
+            var intValue = await ac.GetOCPIntParam(ocp, name);
+
+            // Cache it
+            await _cache.SetRecordAsync<int>($"{ac.Address}_ocp_{resource}_{name}", intValue, PolicyValidity, PolicyValidity);
+
+            return intValue;
+        }
+
+        private async Task<string> GetStringFromOCP(AccessControl ac, string resource, OCP ocp, string name)
+        {
+            // Try to get it from cache
+            var record = await _cache.GetRecordAsync<string>($"{ac.Address}_ocp_{resource}_{name}");
+
+            if (record is not null)
+            {
+                return record;
+            }
+
+            // Read it from the chain
+            var stringValue = await ac.GetOCPStringParam(ocp, name);
+
+            // Cache it
+            await _cache.SetRecordAsync<string>($"{ac.Address}_ocp_{resource}_{name}", stringValue, PolicyValidity, PolicyValidity);
+
+            return stringValue;
         }
     }
 }
