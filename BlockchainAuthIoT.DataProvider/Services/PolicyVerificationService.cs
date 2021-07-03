@@ -215,7 +215,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var boolValue = await ac.GetOCPBoolParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync<bool>($"{ac.Address}_ocp_{resource}_{name}", boolValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", boolValue, PolicyValidity, PolicyValidity);
 
             return boolValue;
         }
@@ -234,7 +234,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var intValue = await ac.GetOCPIntParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync<int>($"{ac.Address}_ocp_{resource}_{name}", intValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", intValue, PolicyValidity, PolicyValidity);
 
             return intValue;
         }
@@ -253,7 +253,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var stringValue = await ac.GetOCPStringParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync<string>($"{ac.Address}_ocp_{resource}_{name}", stringValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", stringValue, PolicyValidity, PolicyValidity);
 
             return stringValue;
         }
