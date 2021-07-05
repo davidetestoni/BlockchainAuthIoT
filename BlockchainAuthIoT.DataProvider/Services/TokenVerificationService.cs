@@ -19,6 +19,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         private readonly IConfiguration _config;
 
         public TimeSpan TokenValidity { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan CacheValidity { get; set; } = TimeSpan.FromHours(1);
 
         public TokenVerificationService(IDistributedCache cache, IWeb3Provider web3Provider,
             IConfiguration config)
@@ -27,6 +28,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             _web3Provider = web3Provider;
             _config = config;
             TokenValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Security")["TokenValidity"]));
+            CacheValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Caching")["Expiration"]));
         }
 
         /// <inheritdoc/>

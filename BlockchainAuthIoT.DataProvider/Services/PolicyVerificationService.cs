@@ -24,7 +24,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
         private readonly IWeb3Provider _web3Provider;
         private readonly IPolicyDatabase _policyDatabase;
 
-        public TimeSpan PolicyValidity { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan CacheValidity { get; set; } = TimeSpan.FromHours(1);
 
         public PolicyVerificationService(IDistributedCache cache, IWeb3Provider web3Provider,
             IPolicyDatabase policyDatabase, IConfiguration config)
@@ -32,7 +32,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             _cache = cache;
             _web3Provider = web3Provider;
             _policyDatabase = policyDatabase;
-            PolicyValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Security")["TokenValidity"]));
+            CacheValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Caching")["Expiration"]));
         }
 
         public Task VerifyPolicy(string contractAddress, string resource, PolicyRule rule)
@@ -79,7 +79,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 }
 
                 // Save it to the cache for later use
-                await _cache.SetRecordAsync($"{contractAddress}_{resource}", json, PolicyValidity, PolicyValidity);
+                await _cache.SetRecordAsync($"{contractAddress}_{resource}", json, CacheValidity, CacheValidity);
             }
 
             var policy = JObject.Parse(json);
@@ -148,7 +148,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
 
                 // Save it to the cache for later use
                 json = JsonConvert.SerializeObject(ocp);
-                await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}", json, PolicyValidity, PolicyValidity);
+                await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}", json, CacheValidity, CacheValidity);
             }
 
             if (DateTime.UtcNow < ocp.StartTime)
@@ -215,7 +215,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var boolValue = await ac.GetOCPBoolParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", boolValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", boolValue, CacheValidity, CacheValidity);
 
             return boolValue;
         }
@@ -234,7 +234,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var intValue = await ac.GetOCPIntParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", intValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", intValue, CacheValidity, CacheValidity);
 
             return intValue;
         }
@@ -253,7 +253,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             var stringValue = await ac.GetOCPStringParam(ocp, name);
 
             // Cache it
-            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", stringValue, PolicyValidity, PolicyValidity);
+            await _cache.SetRecordAsync($"{ac.Address}_ocp_{resource}_{name}", stringValue, CacheValidity, CacheValidity);
 
             return stringValue;
         }
