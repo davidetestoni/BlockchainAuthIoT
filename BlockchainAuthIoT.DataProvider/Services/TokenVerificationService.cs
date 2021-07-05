@@ -26,6 +26,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
             _cache = cache;
             _web3Provider = web3Provider;
             _config = config;
+            TokenValidity = TimeSpan.FromSeconds(int.Parse(config.GetSection("Security")["TokenValidity"]));
         }
 
         /// <inheritdoc/>
