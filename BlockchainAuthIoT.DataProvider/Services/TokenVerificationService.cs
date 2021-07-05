@@ -56,7 +56,7 @@ namespace BlockchainAuthIoT.DataProvider.Services
                 throw new TokenVerificationException("The signature has expired");
             }
 
-            // Verify that the signer is registered in the contract
+            // Verify that the user's public key is registered in the contract
             // Try to get it from the cache
             var pubKey = await _cache.GetRecordAsync<string>(providedContractAddress);
 
