@@ -68,9 +68,19 @@ namespace BlockchainAuthIoT.DataProvider.Services
                     return;
                 }
 
-                // Otherwise retrieve the json from the remote policy database
-                var body = await _policyDatabase.GetPolicy(contractPolicy.Location);
-                json = Encoding.UTF8.GetString(body);
+                // Otherwise, try to retrieve the json from the remote policy database
+                byte[] body;
+                try
+                {
+                    body = await _policyDatabase.GetPolicy(contractPolicy.Location);
+                    json = Encoding.UTF8.GetString(body);
+                }
+                catch
+                {
+                    // In case of outage, verify the OCP
+                    await VerifyOCP(ac, resource, rules);
+                    return;
+                }
 
                 // Verify that the policy hasn't been modified
                 if (!contractPolicy.HashCode.SequenceEqual(Utils.ComputeHashCode(body)))
