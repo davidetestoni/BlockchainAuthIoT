@@ -25,8 +25,6 @@ namespace BlockchainAuthIoT.Client
             services.AddRazorPages();
             services.AddServerSideBlazor();
 
-            // Add the providers and unlock the account (only for testing)
-            // TODO: Convert this to actual production code
             services.AddSingleton<IWeb3Provider>(_ => new Web3Provider(Configuration.GetConnectionString("Chain")));
             services.AddSingleton<IAccountProvider, AccountProvider>();
             services.AddSingleton<AccessControlService>();
