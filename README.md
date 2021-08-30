@@ -13,7 +13,7 @@ docker run --name mysql --network iot -p 3306:3306 -e MYSQL_ROOT_PASSWORD=admin 
 Configure access to a web3 provider (for example through infura, or a local web3 provider like `geth` or `ganache`).
 This can be done by editing all instances of the `ConnectionStrings__Chain` environment variable in the `docker-compose.yml` file.
 
-Run the build script
+Run the build script (you need to install the [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0))
 ```text
 ./run.bat
 ```
