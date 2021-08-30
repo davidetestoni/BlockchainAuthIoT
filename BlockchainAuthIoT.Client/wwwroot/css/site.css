@@ -2,18 +2,12 @@
 
 html, body {
     font-family: Courier New, Courier, monospace;
-    color: white;
-    background-color: #222;
+    color: black;
+    background-color: white;
 }
 
 a, .btn-link {
-    color: #0366d6;
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    color: navy;
 }
 
 .content {
@@ -52,9 +46,9 @@ a, .btn-link {
     }
 
 input:not([type=checkbox]), textarea {
-    background-color: #111;
-    color: white;
-    border: 1px solid black;
+    background-color: #eee;
+    color: black;
+    border: 1px solid #ddd;
     padding: 3px 6px 3px 6px;
 }
 
@@ -64,34 +58,27 @@ textarea {
 
 select {
     margin-left: 5px !important;
-    background-color: #111;
-    color: white;
+    background-color: #eee;
+    color: black;
     border-radius: 5px;
-    border: 1px solid black;
+    border: 1px solid #ddd;
     padding: 3px;
 }
 
 hr {
-    background-color: grey;
-}
-
-.btn-sm, .btn {
-    color: black;
-    font-weight: bold;
+    background-color: lightgrey;
 }
 
 .sidebar {
-    background-color: #111 !important;
-    background-image: none !important;
     /* display: none; Remove this to display the sidebar */
 }
 
 h5 {
-    color: orange;
+    color: darkred;
 }
 
 h6 {
-    color: yellow;
+    color: dodgerblue;
 }
 
 .table {
