@@ -1,5 +1,5 @@
 # Blockchain Auth IoT
-Master's thesis project on the use of an **Ethereum Smart Contract** to manage **Authentication** and **Access Control** when querying IoT data from an **Edge IoT Network**.
+Master's thesis project on the use of an **Ethereum Smart Contract** to manage **Authentication** and **Access Control** when querying data from an IoT network at the **Edge**.
 
 ## Local setup with docker-compose
 First of all create a network called `iot` for your containers
@@ -34,7 +34,7 @@ Then deploy as many sample IoT devices as you need (outside the cluster) by runn
 docker run -it -e DEVICE_NAME=Sensor_1 -e DEVICE_SLEEP=5000 -e RABBITMQ_CONN="amqp://guest:guest@<ip>:30002" davidetestoni/iotdevice:latest
 docker run -it -e DEVICE_NAME=Sensor_2 -e DEVICE_SLEEP=6000 -e RABBITMQ_CONN="amqp://guest:guest@<ip>:30002" davidetestoni/iotdevice:latest
 ```
-Finally, deploy two instances of the client application.
+Finally, deploy two instances of the client application. Configure the connection string to the web3 provider you intend to use.
 ```text
 docker run -it -e ASPNETCORE_ENVIRONMENT=Release -e ConnectionStrings__Chain="https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b" -p 4000:4000 davidetestoni/iotclient:latest
 docker run -it -e ASPNETCORE_ENVIRONMENT=Release -e ConnectionStrings__Chain="https://kovan.infura.io/v3/2c64819f193e4fdca3ca3520ab1a2b1b" -p 4000:4001 davidetestoni/iotclient:latest
