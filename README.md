@@ -1,6 +1,8 @@
 # Blockchain Auth IoT
 Master's thesis project on the use of an **Ethereum Smart Contract** to manage **Authentication** and **Access Control** when querying data from an IoT network at the **Edge**.
 
+[Power point presentation of this work with demo video](https://mega.nz/file/TxNDiSLS#RLshpNrwNMQZIP38tz2Vsn3F9G1TYqzovHVz9BU3zWw)
+
 ## Local setup with docker-compose
 First of all create a network called `iot` for your containers
 ```text
